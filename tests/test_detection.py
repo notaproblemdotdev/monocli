@@ -91,6 +91,7 @@ class TestCLIDetector:
         assert result["cli_name"] == "glab"
         assert result["is_installed"] is True
         assert result["is_authenticated"] is False
+        assert result["error_message"] is not None
         assert "Network error" in result["error_message"]
 
 
@@ -414,4 +415,5 @@ class TestDetectionRegistry:
 
         assert results["glab"]["is_installed"] is False
         assert results["glab"]["is_authenticated"] is False
+        assert results["glab"]["error_message"] is not None
         assert "Critical error" in results["glab"]["error_message"]
