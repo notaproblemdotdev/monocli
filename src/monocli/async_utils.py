@@ -1,12 +1,16 @@
 """Async subprocess utilities for CLI operations with Textual Workers integration."""
 
 import asyncio
+import json
 import shutil
-from typing import Any
+from typing import Any, TypeVar, Type
 
+from pydantic import BaseModel
 from textual.worker import Worker, get_current_worker
 
 from monocli.exceptions import CLIError, CLINotFoundError, raise_for_error
+
+T = TypeVar("T", bound=BaseModel)
 
 
 async def run_cli_command(
@@ -105,3 +109,34 @@ class CLIAdapter:
     async def run(self, args: list[str], **kwargs) -> str:
         """Run CLI with given arguments."""
         return await run_cli_command([self.cli_name] + args, **kwargs)
+
+    async def fetch_json(self, args: list[str], **kwargs) -> list[dict]:
+        """Run CLI command and parse JSON output.
+
+        Args:
+            args: CLI arguments
+            **kwargs: Additional arguments for run_cli_command
+
+        Returns:
+            Parsed JSON as list of dicts
+        """
+        output = await self.run(args, **kwargs)
+        if not output.strip():
+            return []
+        return json.loads(output)
+
+    async def fetch_and_parse(self, args: list[str], model_class: Type[T], **kwargs) -> list[T]:
+        """Run CLI command, parse JSON, and validate into Pydantic models.
+
+        Args:
+            args: CLI arguments
+            model_class: Pydantic model class to parse items into
+            **kwargs: Additional arguments for run_cli_command
+
+        Returns:
+            List of validated Pydantic model instances
+        """
+        data = await self.fetch_json(args, **kwargs)
+        if not isinstance(data, list):
+            data = [data]
+        return [model_class.model_validate(item) for item in data]
