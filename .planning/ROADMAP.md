@@ -7,7 +7,7 @@ This roadmap delivers a unified terminal dashboard that aggregates work items an
 ## Phases
 
 - [x] **Phase 1: Foundation** - Async infrastructure and data models ✓
-- [ ] **Phase 2: CLI Adapters** - Auto-detection and data fetching from platform CLIs
+- [x] **Phase 2: CLI Adapters** - Auto-detection and data fetching from platform CLIs ✓
 - [ ] **Phase 3: Dashboard UI** - Textual widgets, navigation, and browser integration
 
 ## Phase Details
@@ -54,8 +54,8 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — CLI detection mechanism and base adapter enhancements
-- [ ] 02-02-PLAN.md — GitLab glab adapter with MR fetching
-- [ ] 02-03-PLAN.md — Jira acli adapter with work item fetching
+- [x] 02-02-PLAN.md — GitLab glab adapter with MR fetching
+- [x] 02-03-PLAN.md — Jira acli adapter with work item fetching
 
 ### Phase 3: Dashboard UI
 
@@ -89,8 +89,8 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | ✓ Complete | 2025-02-07 |
-| 2. CLI Adapters | 1/3 | In Progress | - |
+| 2. CLI Adapters | 3/3 | ✓ Complete | 2026-02-07 |
 | 3. Dashboard UI | 0/3 | Not started | - |
 
 ---
-*Last updated: 2026-02-07 after 02-01 completion*
+*Last updated: 2026-02-07 after 02-03 completion (Phase 2 complete)*
