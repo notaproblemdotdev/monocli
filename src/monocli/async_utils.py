@@ -3,6 +3,7 @@
 import asyncio
 import json
 import shutil
+from collections.abc import Callable
 from typing import Any, TypeVar, Type
 
 from pydantic import BaseModel
@@ -37,6 +38,7 @@ async def run_cli_command(
     if not shutil.which(executable):
         raise CLINotFoundError(executable)
 
+    proc: asyncio.subprocess.Process | None = None
     try:
         proc = await asyncio.create_subprocess_exec(
             *cmd,
@@ -45,20 +47,22 @@ async def run_cli_command(
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
-        if proc.returncode is None:
+        if proc is not None and proc.returncode is None:
             proc.kill()
         raise asyncio.TimeoutError(f"Command '{' '.join(cmd)}' timed out after {timeout}s")
 
     stdout_str = stdout.decode().strip()
     stderr_str = stderr.decode().strip()
 
-    if check and proc.returncode != 0:
+    if check and proc is not None and proc.returncode is not None and proc.returncode != 0:
         raise_for_error(cmd, proc.returncode, stderr_str)
 
     return stdout_str
 
 
-def fetch_with_worker(widget: Any, fetch_func: callable, *args, **kwargs) -> Worker:
+def fetch_with_worker(
+    widget: Any, fetch_func: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Worker:
     """Start a Textual Worker for fetching data with exclusive=True.
 
     Uses the @work(exclusive=True) pattern to prevent race conditions
@@ -106,11 +110,11 @@ class CLIAdapter:
             self._available = shutil.which(self.cli_name) is not None
         return self._available
 
-    async def run(self, args: list[str], **kwargs) -> str:
+    async def run(self, args: list[str], **kwargs: Any) -> str:
         """Run CLI with given arguments."""
         return await run_cli_command([self.cli_name] + args, **kwargs)
 
-    async def fetch_json(self, args: list[str], **kwargs) -> list[dict]:
+    async def fetch_json(self, args: list[str], **kwargs: Any) -> Any:
         """Run CLI command and parse JSON output.
 
         Args:
@@ -125,7 +129,9 @@ class CLIAdapter:
             return []
         return json.loads(output)
 
-    async def fetch_and_parse(self, args: list[str], model_class: Type[T], **kwargs) -> list[T]:
+    async def fetch_and_parse(
+        self, args: list[str], model_class: Type[T], **kwargs: Any
+    ) -> list[T]:
         """Run CLI command, parse JSON, and validate into Pydantic models.
 
         Args:
