@@ -10,16 +10,16 @@
 - [ ] **DASH-01**: Dashboard renders two-section layout (PRs/MRs section + Work Items section)
 - [ ] **DASH-02**: User can navigate between items using keyboard (j/k or arrow keys)
 - [ ] **DASH-03**: User can press 'o' to open selected item in default browser
-- [ ] **DASH-04**: Application auto-detects which CLIs are installed (glab, acli) and shows only available sections
+- [x] **DASH-04**: Application auto-detects which CLIs are installed (glab, acli) and shows only available sections
 - [ ] **DASH-05**: Per-section loading spinners shown while fetching data
 
 ### Data Sources
 
-- [ ] **DATA-01**: GitLab MRs fetched via glab CLI using --json flag
-- [ ] **DATA-02**: Jira work items fetched via acli CLI using --json flag
+- [x] **DATA-01**: GitLab MRs fetched via glab CLI using --json flag
+- [x] **DATA-02**: Jira work items fetched via acli CLI using --json flag
 - [x] **DATA-03**: All CLI responses parsed and validated with Pydantic models
-- [ ] **DATA-04**: GitLab MRs include: MR number, title, status, author, URL
-- [ ] **DATA-05**: Jira work items include: issue key, title, status, priority, URL
+- [x] **DATA-04**: GitLab MRs include: MR number, title, status, author, URL
+- [x] **DATA-05**: Jira work items include: issue key, title, status, priority, URL
 - [ ] **DATA-06**: Display format for each item shows: Key + Title + Status + Priority
 
 ### Async & Performance
@@ -31,13 +31,13 @@
 
 ### Configuration
 
-- [ ] **CONFIG-01**: Application uses existing CLI authentication (no separate auth)
-- [ ] **CONFIG-02**: Missing or unauthenticated CLIs detected and sections hidden
+- [x] **CONFIG-01**: Application uses existing CLI authentication (no separate auth)
+- [x] **CONFIG-02**: Missing or unauthenticated CLIs detected and sections hidden
 
 ### Testing
 
 - [x] **TEST-01**: Unit tests for Pydantic models using pytest
-- [ ] **TEST-02**: Async tests for CLI adapters using pytest-asyncio
+- [x] **TEST-02**: Async tests for CLI adapters using pytest-asyncio
 - [ ] **TEST-03**: Integration tests for Textual widgets
 
 ## v2 Requirements
@@ -79,22 +79,22 @@
 | DASH-01 | Phase 3 | Pending |
 | DASH-02 | Phase 3 | Pending |
 | DASH-03 | Phase 3 | Pending |
-| DASH-04 | Phase 2 | Pending |
+| DASH-04 | Phase 2 | Complete |
 | DASH-05 | Phase 3 | Pending |
-| DATA-01 | Phase 2 | Pending |
-| DATA-02 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Complete |
+| DATA-02 | Phase 2 | Complete |
 | DATA-03 | Phase 1 | Complete |
-| DATA-04 | Phase 2 | Pending |
-| DATA-05 | Phase 2 | Pending |
+| DATA-04 | Phase 2 | Complete |
+| DATA-05 | Phase 2 | Complete |
 | DATA-06 | Phase 3 | Pending |
 | ASYNC-01 | Phase 1 | Complete |
 | ASYNC-02 | Phase 1 | Complete |
 | ASYNC-03 | Phase 1 | Complete |
 | ASYNC-04 | Phase 1 | Complete |
-| CONFIG-01 | Phase 2 | Pending |
-| CONFIG-02 | Phase 2 | Pending |
+| CONFIG-01 | Phase 2 | Complete |
+| CONFIG-02 | Phase 2 | Complete |
 | TEST-01 | Phase 1 | Complete |
-| TEST-02 | Phase 2 | Pending |
+| TEST-02 | Phase 2 | Complete |
 | TEST-03 | Phase 3 | Pending |
 
 **Coverage:**
@@ -109,4 +109,4 @@
 
 ---
 *Requirements defined: 2025-02-07*
-*Last updated: 2025-02-07 after Phase 1 completion*
+*Last updated: 2025-02-07 after Phase 2 completion*
