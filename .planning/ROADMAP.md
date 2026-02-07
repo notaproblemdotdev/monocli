@@ -74,12 +74,12 @@ Plans:
 6. UI remains responsive during data fetching (no freezing)
 7. Integration tests verify widget behavior using Textual's Pilot class
 
-**Plans:** TBD
+**Plans:** 3 plans in 3 waves
 
 Plans:
-- [ ] 03-01: Create DataTable widgets for PR/MR and Issue sections
-- [ ] 03-02: Build main screen layout with two-section composition
-- [ ] 03-03: Implement keyboard navigation and 'o' key browser integration
+- [ ] 03-01-PLAN.md — Create DataTable section widgets (MergeRequestSection, WorkItemSection)
+- [ ] 03-02-PLAN.md — Build main screen with 50/50 layout and async data fetching
+- [ ] 03-03-PLAN.md — Implement keyboard navigation and browser integration
 
 ## Progress
 
