@@ -35,17 +35,17 @@ class GitLabAdapter(CLIAdapter):
 
     async def fetch_assigned_mrs(
         self,
-        state: str = "opened",
-        author: str = "@me",
+        group: str = "axpo-pl",
+        assignee: str = "@me",
     ) -> list[MergeRequest]:
-        """Fetch MRs assigned to or authored by current user.
+        """Fetch MRs assigned to current user.
 
-        Uses glab mr list with --json flag to fetch merge requests.
-        Filters by author and state to show only relevant MRs.
+        Uses glab mr list with --output json to fetch merge requests.
+        Filters by assignee and group to show only relevant MRs.
 
         Args:
-            state: MR state filter ("opened", "closed", "merged", "locked")
-            author: Author filter ("@me" for current user, or username)
+            group: GitLab group to search (e.g., "axpo-pl")
+            assignee: Assignee filter ("@me" for current user, or username)
 
         Returns:
             List of validated MergeRequest models
@@ -57,18 +57,22 @@ class GitLabAdapter(CLIAdapter):
         Example:
             adapter = GitLabAdapter()
 
-            # Fetch all open MRs by current user
-            mrs = await adapter.fetch_assigned_mrs(state="opened")
+            # Fetch all open MRs assigned to current user
+            mrs = await adapter.fetch_assigned_mrs()
 
-            # Fetch merged MRs
-            merged = await adapter.fetch_assigned_mrs(state="merged")
+            # Fetch MRs for different group
+            mrs = await adapter.fetch_assigned_mrs(group="my-group")
         """
         args = [
             "mr",
             "list",
-            "--json",
-            f"--author={author}",
-            f"--state={state}",
+            "--all",
+            "--group",
+            group,
+            "--assignee",
+            assignee,
+            "--output",
+            "json",
         ]
         return await self.fetch_and_parse(args, MergeRequest)
 
