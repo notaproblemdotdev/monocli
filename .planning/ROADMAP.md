@@ -74,12 +74,14 @@ Plans:
 6. UI remains responsive during data fetching (no freezing)
 7. Integration tests verify widget behavior using Textual's Pilot class
 
-**Plans:** 3 plans in 3 waves
+**Plans:** 5 plans in 3 waves (3 original + 2 gap closure)
 
 Plans:
 - [x] 03-01-PLAN.md — Create DataTable section widgets (MergeRequestSection, WorkItemSection)
 - [x] 03-02-PLAN.md — Build main screen with 50/50 layout and async data fetching
-- [ ] 03-03-PLAN.md — Implement keyboard navigation and browser integration
+- [x] 03-03-PLAN.md — Implement keyboard navigation and browser integration
+- [x] 03-04-PLAN.md — Fix Textual workers API (replace deprecated @work decorator)
+- [x] 03-05-PLAN.md — Fix acli auth check command (replace invalid whoami command)
 
 ## Progress
 
@@ -90,7 +92,7 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | ✓ Complete | 2025-02-07 |
 | 2. CLI Adapters | 3/3 | ✓ Complete | 2026-02-07 |
-| 3. Dashboard UI | 1/3 | In progress | - |
+| 3. Dashboard UI | 5/5 | ✓ Complete | 2026-02-08 |
 
 ---
 *Last updated: 2026-02-07 after 02-03 completion (Phase 2 complete)*
