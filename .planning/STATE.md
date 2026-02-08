@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2025-02-07)
 ## Current Position
 
 Phase: 3 of 3 (Dashboard UI)
-Plan: 3 of 3 in current phase
+Plan: 4 of 4 in current phase (Gap Closure)
 Status: Phase complete
-Last activity: 2026-02-08 — Completed 03-03-PLAN.md (Keyboard Navigation)
+Last activity: 2026-02-08 — Completed 03-05-PLAN.md (Fix acli Auth Check Command)
 
-Progress: [█████████░] 100% (9 of 9 total plans)
+Progress: [██████████] 100% (10 of 10 total plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 4.2 min
-- Total execution time: 0.42 hours
+- Total plans completed: 7
+- Average duration: 4.0 min
+- Total execution time: 0.46 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [█████████░] 100% (9 of 9 total plans)
 |-------|-------|-------|----------|
 | 1. Foundation | 3/3 | 12m 33s | 4m 11s |
 | 2. CLI Adapters | 3/3 | 14m 0s | 4m 40s |
-| 3. Dashboard UI | 3/3 | 10m 0s | 3m 20s |
+| 3. Dashboard UI | 4/4 | 12m 0s | 3m 0s |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (4m), 03-02 (3m), 03-03 (3m)
-- Trend: Phase 3 complete - v1 feature complete!
+- Last 5 plans: 03-02 (3m), 03-03 (3m), 03-05 (2m)
+- Trend: Gap closure complete - acli auth fixed!
 
 *Updated after each plan completion*
 
@@ -115,6 +115,11 @@ Recent decisions affecting current work:
 - Pilot API for integration testing keyboard navigation
 - Silent error handling for browser open failures
 
+**New from 03-05 (Gap Closure):**
+- acli jira auth status is the correct command for auth checking
+- acli whoami doesn't exist and was causing auth check failures
+- Consistent auth command between JiraAdapter and CLIDetector
+
 ### Pending Todos
 
 None yet.
@@ -125,19 +130,20 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-08T11:16:19Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-02-08T11:22:00Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
 
 ## Next Phase
 
 Phase 3: Dashboard UI - **COMPLETE**
-- All 3 plans completed (03-01: Sections, 03-02: MainScreen, 03-03: Navigation)
+- All 4 plans completed (03-01: Sections, 03-02: MainScreen, 03-03: Navigation, 03-05: Gap Closure)
 - v1 requirements fully implemented
 - Dashboard displays merge requests and work items
 - Full keyboard navigation: Tab switching, j/k arrows, 'o' for browser
 - Auto-detection of CLIs with graceful error handling
 - Comprehensive test coverage with pytest and Pilot API
+- Gap closure: Fixed acli auth check command
 
 **Project v1 is feature complete!**
 
