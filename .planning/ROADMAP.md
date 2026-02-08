@@ -77,7 +77,7 @@ Plans:
 **Plans:** 3 plans in 3 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Create DataTable section widgets (MergeRequestSection, WorkItemSection)
+- [x] 03-01-PLAN.md — Create DataTable section widgets (MergeRequestSection, WorkItemSection)
 - [ ] 03-02-PLAN.md — Build main screen with 50/50 layout and async data fetching
 - [ ] 03-03-PLAN.md — Implement keyboard navigation and browser integration
 
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | ✓ Complete | 2025-02-07 |
 | 2. CLI Adapters | 3/3 | ✓ Complete | 2026-02-07 |
-| 3. Dashboard UI | 0/3 | Not started | - |
+| 3. Dashboard UI | 1/3 | In progress | - |
 
 ---
 *Last updated: 2026-02-07 after 02-03 completion (Phase 2 complete)*
