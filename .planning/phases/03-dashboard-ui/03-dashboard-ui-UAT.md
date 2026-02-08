@@ -1,12 +1,12 @@
 ---
-status: complete
+status: diagnosed
 phase: 03-dashboard-ui
 source:
   - 03-01-SUMMARY.md
   - 03-02-SUMMARY.md
   - 03-03-SUMMARY.md
 started: 2026-02-08T16:00:00Z
-updated: 2026-02-08T16:05:00Z
+updated: 2026-02-08T16:15:00Z
 ---
 
 ## Current Test
@@ -106,13 +106,39 @@ skipped: 10
   reason: "User reported: merge requests shows spinner loading all the time, work items shows error"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "Code uses deprecated @work(exclusive=True) decorator which was removed in Textual 7.x. Workers never execute, so spinner stays in LOADING state forever."
+  artifacts:
+    - path: "src/monocli/ui/main_screen.py"
+      issue: "Uses @work decorator on lines 130, 162 - deprecated API removed in Textual 7.x"
+  missing:
+    - "Convert to run_worker() method calls instead of @work decorator"
+    - "Remove 'from textual import work' import"
+  debug_session: ".planning/debug/textual-workers-api.md"
 
 - truth: "Loading spinners resolve to either data, empty, or error state"
   status: failed
   reason: "User reported: MR section spinner spins forever without resolving"
   severity: major
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "Code uses @work decorator which doesn't exist in Textual 7.x, causing async fetch methods to never be scheduled as workers"
+  artifacts:
+    - path: "src/monocli/ui/main_screen.py"
+      issue: "fetch_merge_requests() and fetch_work_items() use @work decorator that doesn't exist"
+  missing:
+    - "Use self.run_worker(coro, exclusive=True) instead of @work decorator"
+  debug_session: ".planning/debug/textual-workers-api.md"
+
+- truth: "CLI authentication check uses valid command"
+  status: failed
+  reason: "acli whoami fails with 'unknown command' - this command doesn't exist in acli"
+  severity: major
+  test: 5
+  root_cause: "The code assumes 'acli whoami' is a valid command, but acli doesn't have this command. Should use 'acli jira auth status' instead."
+  artifacts:
+    - path: "src/monocli/adapters/jira.py"
+      issue: "check_auth() method uses ['whoami'] on line 94 - invalid command"
+    - path: "src/monocli/ui/main_screen.py"
+      issue: "CLIDetector registered with ['whoami'] on line 124 - invalid command"
+  missing:
+    - "Replace ['whoami'] with ['jira', 'auth', 'status'] for acli auth check"
+  debug_session: ".planning/debug/resolved/acli-whoami-unknown-command.md"
