@@ -13,6 +13,10 @@ from monocli.exceptions import CLIError, CLINotFoundError, raise_for_error
 
 T = TypeVar("T", bound=BaseModel)
 
+# Semaphore to prevent race conditions in concurrent subprocess execution
+# Limit to 3 concurrent subprocesses to avoid transport cleanup issues
+_subprocess_semaphore = asyncio.Semaphore(3)
+
 
 async def run_cli_command(
     cmd: list[str],
@@ -38,26 +42,36 @@ async def run_cli_command(
     if not shutil.which(executable):
         raise CLINotFoundError(executable)
 
-    proc: asyncio.subprocess.Process | None = None
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-    except asyncio.TimeoutError:
-        if proc is not None and proc.returncode is None:
-            proc.kill()
-        raise asyncio.TimeoutError(f"Command '{' '.join(cmd)}' timed out after {timeout}s")
+    async with _subprocess_semaphore:  # Prevent race conditions
+        proc: asyncio.subprocess.Process | None = None
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        except asyncio.TimeoutError:
+            if proc is not None and proc.returncode is None:
+                proc.kill()
+                await proc.wait()
+            raise asyncio.TimeoutError(f"Command '{' '.join(cmd)}' timed out after {timeout}s")
+        finally:
+            # Ensure process cleanup happens before releasing semaphore
+            if proc is not None and proc.returncode is None:
+                try:
+                    proc.kill()
+                    await asyncio.wait_for(proc.wait(), timeout=1.0)
+                except (asyncio.TimeoutError, ProcessLookupError):
+                    pass  # Process already terminated
 
-    stdout_str = stdout.decode().strip()
-    stderr_str = stderr.decode().strip()
+        stdout_str = stdout.decode().strip()
+        stderr_str = stderr.decode().strip()
 
-    if check and proc is not None and proc.returncode is not None and proc.returncode != 0:
-        raise_for_error(cmd, proc.returncode, stderr_str)
+        if check and proc.returncode != 0:
+            raise_for_error(cmd, proc.returncode, stderr_str)
 
-    return stdout_str
+        return stdout_str
 
 
 def fetch_with_worker(

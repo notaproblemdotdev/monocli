@@ -3,8 +3,36 @@
 import asyncio
 import pytest
 
-from monocli.async_utils import run_cli_command, CLIAdapter
+from monocli.async_utils import _subprocess_semaphore, CLIAdapter, run_cli_command
 from monocli.exceptions import CLIError, CLINotFoundError
+
+
+class TestConcurrentSubprocesses:
+    """Tests for concurrent subprocess execution with semaphore protection."""
+
+    @pytest.mark.asyncio
+    async def test_concurrent_subprocesses_no_race_condition(self):
+        """Test that concurrent subprocess calls don't cause race conditions.
+
+        This test runs 5 concurrent echo commands to verify that the semaphore
+        prevents the asyncio InvalidStateError that can occur with concurrent
+        subprocess transport cleanup.
+        """
+        # Run multiple echo commands concurrently
+        tasks = [run_cli_command(["echo", f"test{i}"], check=False) for i in range(5)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # All should succeed without exceptions
+        assert len(results) == 5
+        for i, result in enumerate(results):
+            assert not isinstance(result, Exception), f"Task {i} failed: {result}"
+            assert result == f"test{i}"
+
+    @pytest.mark.asyncio
+    async def test_semaphore_limits_concurrent_execution(self):
+        """Test that semaphore is configured with correct value."""
+        # Initial value should be 3 (max concurrent subprocesses)
+        assert _subprocess_semaphore._value == 3
 
 
 class TestRunCliCommand:
