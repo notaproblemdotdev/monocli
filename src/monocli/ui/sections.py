@@ -149,6 +149,31 @@ class BaseSection(Static):
             return ""
         return dt.strftime("%Y-%m-%d")
 
+    def focus_table(self) -> None:
+        """Focus the internal DataTable widget.
+
+        Enables keyboard navigation within the table when this
+        section becomes the active section.
+        """
+        if self._data_table is not None:
+            self._data_table.focus()
+
+    def select_next(self) -> None:
+        """Move selection to the next row in the DataTable.
+
+        Wraps DataTable's cursor movement to navigate down.
+        """
+        if self._data_table is not None and self.state == SectionState.DATA:
+            self._data_table.action_cursor_down()
+
+    def select_previous(self) -> None:
+        """Move selection to the previous row in the DataTable.
+
+        Wraps DataTable's cursor movement to navigate up.
+        """
+        if self._data_table is not None and self.state == SectionState.DATA:
+            self._data_table.action_cursor_up()
+
 
 class MergeRequestSection(BaseSection):
     """Section widget for displaying merge requests.
