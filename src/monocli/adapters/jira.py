@@ -76,7 +76,7 @@ class JiraAdapter(CLIAdapter):
     async def check_auth(self) -> bool:
         """Check if acli is authenticated.
 
-        Runs acli whoami to verify authentication without
+        Runs acli jira auth status to verify authentication without
         triggering any interactive prompts.
 
         Returns:
@@ -91,7 +91,7 @@ class JiraAdapter(CLIAdapter):
                 print("Please run: acli login")
         """
         try:
-            await self.run(["whoami"], check=True)
+            await self.run(["jira", "auth", "status"], check=True)
             return True
         except (CLIAuthError, CLINotFoundError):
             return False
