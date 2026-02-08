@@ -13,7 +13,6 @@ from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Label, Static
-from textual import work
 
 from monocli.ui.sections import MergeRequestSection, WorkItemSection
 
@@ -121,17 +120,16 @@ class MainScreen(Screen):
 
         registry = DetectionRegistry()
         registry.register(CLIDetector("glab", ["auth", "status"]))
-        registry.register(CLIDetector("acli", ["whoami"]))
+        registry.register(CLIDetector("acli", ["jira", "auth", "status"]))
 
-        # Start detection and fetching
-        self.fetch_merge_requests()
-        self.fetch_work_items()
+        # Start detection and fetching using run_worker API
+        self.run_worker(self.fetch_merge_requests(), exclusive=True)
+        self.run_worker(self.fetch_work_items(), exclusive=True)
 
-    @work(exclusive=True)
     async def fetch_merge_requests(self) -> None:
         """Fetch merge requests from GitLab.
 
-        Uses @work(exclusive=True) to prevent race conditions.
+        Runs as a background worker with exclusive=True to prevent race conditions.
         Updates the MR section with data when complete.
         """
         from monocli.adapters.gitlab import GitLabAdapter
@@ -159,11 +157,10 @@ class MainScreen(Screen):
         finally:
             self.mr_loading = False
 
-    @work(exclusive=True)
     async def fetch_work_items(self) -> None:
         """Fetch work items from Jira.
 
-        Uses @work(exclusive=True) to prevent race conditions.
+        Runs as a background worker with exclusive=True to prevent race conditions.
         Updates the work items section with data when complete.
         """
         from monocli.adapters.jira import JiraAdapter
