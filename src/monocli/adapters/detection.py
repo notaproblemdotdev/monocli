@@ -7,8 +7,11 @@ with caching to avoid repeated system calls.
 import shutil
 from typing import TypedDict
 
+from monocli import get_logger
 from monocli.async_utils import run_cli_command
 from monocli.exceptions import CLIAuthError, CLINotFoundError
+
+logger = get_logger(__name__)
 
 
 class DetectionResult(TypedDict):
@@ -75,8 +78,11 @@ class CLIDetector:
             else:
                 print(f"Please authenticate: {result['error_message']}")
         """
+        logger.debug("Checking CLI availability", cli=self.cli_name)
+
         # Check if CLI is installed
         if not shutil.which(self.cli_name):
+            logger.warning("CLI not installed", cli=self.cli_name)
             return DetectionResult(
                 cli_name=self.cli_name,
                 is_installed=False,
@@ -87,6 +93,7 @@ class CLIDetector:
         # Check if CLI is authenticated
         try:
             await run_cli_command([self.cli_name] + self.test_args, timeout=10.0)
+            logger.debug("CLI authenticated", cli=self.cli_name)
             return DetectionResult(
                 cli_name=self.cli_name,
                 is_installed=True,
@@ -94,6 +101,7 @@ class CLIDetector:
                 error_message=None,
             )
         except CLIAuthError as e:
+            logger.warning("CLI not authenticated", cli=self.cli_name)
             return DetectionResult(
                 cli_name=self.cli_name,
                 is_installed=True,
@@ -102,6 +110,7 @@ class CLIDetector:
             )
         except CLINotFoundError:
             # This shouldn't happen since we checked above, but handle it
+            logger.error("CLI unexpectedly not found", cli=self.cli_name)
             return DetectionResult(
                 cli_name=self.cli_name,
                 is_installed=False,
@@ -109,6 +118,7 @@ class CLIDetector:
                 error_message=f"{self.cli_name}: command not found",
             )
         except Exception as e:
+            logger.error("CLI detection failed", cli=self.cli_name, error=str(e))
             return DetectionResult(
                 cli_name=self.cli_name,
                 is_installed=True,
@@ -189,6 +199,8 @@ class DetectionRegistry:
 
         import asyncio
 
+        logger.info("Running CLI detection", cli_count=len(self._detectors))
+
         # Run all detectors concurrently
         coroutines = [detector.check_availability() for detector in self._detectors.values()]
         results_list: list[DetectionResult | BaseException] = await asyncio.gather(
@@ -211,6 +223,7 @@ class DetectionRegistry:
 
         # Cache results
         self._cached_results = results
+        logger.info("CLI detection complete", results=results)
         return results.copy()
 
     def get_available(self) -> list[str]:

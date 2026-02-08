@@ -10,10 +10,11 @@ requires-python = ">=3.13"
 dependencies = [
     "textual>=7.5.0",
     "pydantic>=2.12.5",
+    "structlog>=24.1.0",
 ]
 
 [project.scripts]
-monocli = "monocli:main"
+monocli = "monocli.__main__:main"
 
 [project.optional-dependencies]
 dev = [
@@ -70,3 +71,8 @@ addopts = "-v --cov=src/monocli --cov-report=term-missing"
 [build-system]
 requires = ["uv_build>=0.9.15,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.15",
+]

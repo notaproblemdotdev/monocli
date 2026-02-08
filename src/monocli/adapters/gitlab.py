@@ -4,9 +4,12 @@ Provides GitLabAdapter class that uses glab CLI to fetch merge requests
 assigned to or authored by the current user.
 """
 
+from monocli import get_logger
 from monocli.async_utils import CLIAdapter
 from monocli.exceptions import CLIAuthError, CLINotFoundError
 from monocli.models import MergeRequest
+
+logger = get_logger(__name__)
 
 
 class GitLabAdapter(CLIAdapter):
@@ -63,6 +66,7 @@ class GitLabAdapter(CLIAdapter):
             # Fetch MRs for different group
             mrs = await adapter.fetch_assigned_mrs(group="my-group")
         """
+        logger.info("Fetching merge requests", group=group, assignee=assignee)
         args = [
             "mr",
             "list",
@@ -74,7 +78,13 @@ class GitLabAdapter(CLIAdapter):
             "--output",
             "json",
         ]
-        return await self.fetch_and_parse(args, MergeRequest)
+        try:
+            result = await self.fetch_and_parse(args, MergeRequest)
+            logger.info("Fetched merge requests", count=len(result))
+            return result
+        except (CLIAuthError, CLINotFoundError):
+            logger.warning("Failed to fetch merge requests", group=group)
+            raise
 
     async def check_auth(self) -> bool:
         """Check if glab is authenticated.
@@ -93,8 +103,11 @@ class GitLabAdapter(CLIAdapter):
             else:
                 print("Please run: glab auth login")
         """
+        logger.debug("Checking GitLab authentication")
         try:
             await self.run(["auth", "status"], check=True)
+            logger.debug("GitLab authenticated")
             return True
         except (CLIAuthError, CLINotFoundError):
+            logger.warning("GitLab not authenticated")
             return False

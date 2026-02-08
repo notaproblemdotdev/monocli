@@ -4,9 +4,12 @@ Provides JiraAdapter class that uses acli CLI to fetch Jira issues
 assigned to the current user.
 """
 
+from monocli import get_logger
 from monocli.async_utils import CLIAdapter
 from monocli.exceptions import CLIAuthError, CLINotFoundError
 from monocli.models import JiraWorkItem
+
+logger = get_logger(__name__)
 
 
 class JiraAdapter(CLIAdapter):
@@ -63,6 +66,7 @@ class JiraAdapter(CLIAdapter):
             # Fetch only "In Progress" items
             in_progress = await adapter.fetch_assigned_items(status_filter="In Progress")
         """
+        logger.info("Fetching Jira work items", assignee=assignee, status_filter=status_filter)
         args = [
             "jira",
             "workitem",
@@ -71,7 +75,13 @@ class JiraAdapter(CLIAdapter):
             "assignee = currentUser() AND statusCategory != Done",
             "--json",
         ]
-        return await self.fetch_and_parse(args, JiraWorkItem)
+        try:
+            result = await self.fetch_and_parse(args, JiraWorkItem)
+            logger.info("Fetched Jira work items", count=len(result))
+            return result
+        except (CLIAuthError, CLINotFoundError):
+            logger.warning("Failed to fetch Jira work items")
+            raise
 
     async def check_auth(self) -> bool:
         """Check if acli is authenticated.
@@ -90,8 +100,11 @@ class JiraAdapter(CLIAdapter):
             else:
                 print("Please run: acli login")
         """
+        logger.debug("Checking Jira authentication")
         try:
             await self.run(["jira", "auth", "status"], check=True)
+            logger.debug("Jira authenticated")
             return True
         except (CLIAuthError, CLINotFoundError):
+            logger.warning("Jira not authenticated")
             return False
