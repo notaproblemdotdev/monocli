@@ -103,5 +103,17 @@ One dashboard showing all assigned work items and pending PRs/MRs without switch
 | structlog for logging | Structured JSON logging for production | ✓ Good — both human and machine readable |
 | asyncio.Semaphore(3) | Limit concurrent subprocess execution | ✓ Good — prevents race conditions |
 
+## Current Milestone: v2.0 Extended Platform Support
+
+**Goal:** Add Todoist integration and enhanced dashboard features for broader work item coverage
+
+**Target features:**
+- Todoist CLI adapter for task fetching
+- New "Tasks" section in dashboard (or integration with existing sections)
+- Manual refresh capability (r/F5 key)
+- Help screen (? key) for keyboard shortcuts
+- Configuration file support (~/.config/monocli/config.yaml)
+
 ---
+
 *Last updated: 2026-02-09 after v1.0 milestone completion*

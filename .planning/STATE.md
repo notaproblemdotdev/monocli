@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** One dashboard showing all assigned work items and pending PRs/MRs without switching between browser tabs or context switching between platforms.
-**Current focus:** Planning v2.0 — Todoist integration
+**Current focus:** Milestone v2.0 — Todoist integration
 
 ## Current Position
 
-Phase: Not started — v1.0 milestone complete
+Phase: Not started — Milestone v2.0 being defined
 Plan: Not started
-Status: Ready to plan v2.0
-Last activity: 2026-02-09 — v1.0 milestone complete
+Status: Defining requirements for v2.0
+Last activity: 2026-02-09 — Started v2.0 milestone planning
 
-Progress: [████████████] 100% (15/15 plans, v1.0 shipped)
+Progress: [████████████░░] 100% v1.0 complete, v2.0 starting
 
 ## Performance Metrics
 
@@ -24,7 +24,7 @@ Progress: [████████████] 100% (15/15 plans, v1.0 shipped
 - Total execution time: ~1.5 hours
 - Average per plan: ~6 minutes
 
-**By Phase:**
+**By Phase (v1.0):**
 
 | Phase | Plans | Status | Completed |
 |-------|-------|--------|-----------|
@@ -41,26 +41,25 @@ All decisions moved to PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-None — v1.0 shipped successfully.
+None — v1.0 shipped successfully, ready for v2.0 development.
 
 ## Session Continuity
 
-Last session: 2026-02-09T21:45:00Z
-Stopped at: v1.0 milestone complete, ready to plan v2.0
+Last session: 2026-02-09T21:50:00Z
+Stopped at: v2.0 milestone initialized, defining requirements
 Resume file: None
 
 ## Next Milestone
 
 **v2.0 — Extended Platform Support**
 
-Potential features:
-- GitHub CLI adapter (gh) for PRs and Issues
-- Todoist integration for task management
-- Refresh capability (r/F5)
-- Search/filter functionality
+Focus areas:
+- Todoist CLI adapter for task management
+- Manual refresh capability (r/F5)
+- Help screen (? key)
 - Configuration file support
 
-**User request:** Add Todoist support
+**User request:** Add Todoist support as primary v2.0 feature
 
 ---
 
