@@ -27,7 +27,7 @@ class TestCLIDetector:
             mock_which.return_value = "/usr/local/bin/glab"
 
             with patch("monocli.adapters.detection.run_cli_command") as mock_run:
-                mock_run.return_value = "✓ Logged in to gitlab.com as user"
+                mock_run.return_value = ("", "✓ Logged in to gitlab.com as user")
 
                 result = await detector.check_availability()
 

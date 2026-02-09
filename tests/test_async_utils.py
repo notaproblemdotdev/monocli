@@ -25,8 +25,9 @@ class TestConcurrentSubprocesses:
         # All should succeed without exceptions
         assert len(results) == 5
         for i, result in enumerate(results):
-            assert not isinstance(result, Exception), f"Task {i} failed: {result}"
-            assert result == f"test{i}"
+            assert not isinstance(result, BaseException), f"Task {i} failed: {result}"
+            assert isinstance(result, tuple)
+            assert result[0] == f"test{i}"
 
     @pytest.mark.asyncio
     async def test_semaphore_limits_concurrent_execution(self):
@@ -41,14 +42,14 @@ class TestRunCliCommand:
     @pytest.mark.asyncio
     async def test_run_simple_command(self):
         """Test running a simple echo command."""
-        result = await run_cli_command(["echo", "hello"])
-        assert result == "hello"
+        stdout, stderr = await run_cli_command(["echo", "hello"])
+        assert stdout == "hello"
 
     @pytest.mark.asyncio
     async def test_run_with_multiple_args(self):
         """Test command with multiple arguments."""
-        result = await run_cli_command(["echo", "hello", "world"])
-        assert result == "hello world"
+        stdout, stderr = await run_cli_command(["echo", "hello", "world"])
+        assert stdout == "hello world"
 
     @pytest.mark.asyncio
     async def test_run_invalid_command_raises_not_found(self):
@@ -67,16 +68,19 @@ class TestRunCliCommand:
     @pytest.mark.asyncio
     async def test_run_without_check_does_not_raise(self):
         """Test that check=False prevents exception on failure."""
-        result = await run_cli_command(["python", "-c", "import sys; sys.exit(1)"], check=False)
-        # Should not raise, but result might be empty
-        assert isinstance(result, str)
+        stdout, stderr = await run_cli_command(
+            ["python", "-c", "import sys; sys.exit(1)"], check=False
+        )
+        # Should not raise, but stdout might be empty
+        assert isinstance(stdout, str)
+        assert isinstance(stderr, str)
 
     @pytest.mark.asyncio
     async def test_run_with_timeout(self):
         """Test that timeout parameter works."""
         # This should complete quickly
-        result = await run_cli_command(["echo", "hi"], timeout=5.0)
-        assert result == "hi"
+        stdout, stderr = await run_cli_command(["echo", "hi"], timeout=5.0)
+        assert stdout == "hi"
 
     @pytest.mark.asyncio
     async def test_run_timeout_raises(self):
@@ -115,8 +119,8 @@ class TestCLIAdapter:
     async def test_adapter_run(self):
         """Test running command through adapter."""
         adapter = CLIAdapter("echo")
-        result = await adapter.run(["hello"])
-        assert result == "hello"
+        stdout, stderr = await adapter.run(["hello"])
+        assert stdout == "hello"
 
     @pytest.mark.asyncio
     async def test_adapter_run_not_available(self):

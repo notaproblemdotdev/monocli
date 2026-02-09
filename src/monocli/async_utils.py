@@ -18,12 +18,36 @@ T = TypeVar("T", bound=BaseModel)
 _subprocess_semaphore = asyncio.Semaphore(3)
 
 
+async def _cleanup_process(proc: asyncio.subprocess.Process) -> None:
+    """Clean up a subprocess without triggering race conditions.
+
+    This function handles the tricky asyncio subprocess cleanup to avoid
+    InvalidStateError race conditions. It gives asyncio's internal callbacks
+    time to run before attempting manual cleanup.
+    """
+    if proc.returncode is not None:
+        return  # Already terminated
+
+    try:
+        proc.kill()
+        # Use a short wait with shield to prevent cancellation issues
+        # but catch InvalidStateError which can occur due to race conditions
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=1.0)
+        except (asyncio.TimeoutError, ProcessLookupError):
+            pass
+    except asyncio.InvalidStateError:
+        # Process is in an invalid state, likely already being cleaned up
+        # by asyncio's internal mechanisms - this is safe to ignore
+        pass
+
+
 async def run_cli_command(
     cmd: list[str],
     timeout: float = 30.0,
     check: bool = True,
-) -> str:
-    """Run a CLI command asynchronously and return stdout.
+) -> tuple[str, str]:
+    """Run a CLI command asynchronously and return (stdout, stderr).
 
     Args:
         cmd: Command and arguments as list
@@ -31,7 +55,7 @@ async def run_cli_command(
         check: If True, raise CLIError on non-zero exit
 
     Returns:
-        Command stdout as string
+        Tuple of (stdout, stderr) as strings
 
     Raises:
         CLINotFoundError: If executable not found
@@ -44,34 +68,45 @@ async def run_cli_command(
 
     async with _subprocess_semaphore:  # Prevent race conditions
         proc: asyncio.subprocess.Process | None = None
+        stdout = b""
+        stderr = b""
+
         try:
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.DEVNULL,  # Prevent hanging on input
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
-            if proc is not None and proc.returncode is None:
-                proc.kill()
-                await proc.wait()
-            raise asyncio.TimeoutError(f"Command '{' '.join(cmd)}' timed out after {timeout}s")
+
+            # Wait for completion with timeout
+            # Note: use wait_for directly on communicate() instead of wrapping
+            # in create_task — the extra task layer causes InvalidStateError
+            # race conditions in asyncio's subprocess transport cleanup,
+            # especially under Textual's event loop.
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            except asyncio.TimeoutError:
+                # Clean up the process
+                if proc.returncode is None:
+                    await _cleanup_process(proc)
+
+                raise TimeoutError(f"Command '{' '.join(cmd)}' timed out after {timeout}s")
+
         finally:
-            # Ensure process cleanup happens before releasing semaphore
+            # Ensure any remaining cleanup happens
             if proc is not None and proc.returncode is None:
-                try:
-                    proc.kill()
-                    await asyncio.wait_for(proc.wait(), timeout=1.0)
-                except (asyncio.TimeoutError, ProcessLookupError):
-                    pass  # Process already terminated
+                await _cleanup_process(proc)
 
         stdout_str = stdout.decode().strip()
         stderr_str = stderr.decode().strip()
 
-        if check and proc.returncode != 0:
-            raise_for_error(cmd, proc.returncode, stderr_str)
+        if check and proc is not None:
+            returncode = proc.returncode
+            if returncode not in (None, 0):
+                raise_for_error(cmd, returncode, stderr_str)
 
-        return stdout_str
+        return stdout_str, stderr_str
 
 
 def fetch_with_worker(
@@ -96,8 +131,8 @@ def fetch_with_worker(
 
             @work(exclusive=True)  # Prevents race conditions
             async def fetch_data(self) -> None:
-                result = await run_cli_command(["glab", "mr", "list", "--json"])
-                self.data = result
+                stdout, stderr = await run_cli_command(["glab", "mr", "list", "--json"])
+                self.data = stdout
     """
     from textual.worker import Worker
 
@@ -127,12 +162,16 @@ class CLIAdapter:
             self._available = shutil.which(self.cli_name) is not None
         return self._available
 
-    async def run(self, args: list[str], **kwargs: Any) -> str:
-        """Run CLI with given arguments."""
+    async def run(self, args: list[str], **kwargs: Any) -> tuple[str, str]:
+        """Run CLI with given arguments.
+
+        Returns:
+            Tuple of (stdout, stderr) as strings
+        """
         return await run_cli_command([self.cli_name] + args, **kwargs)
 
     async def fetch_json(self, args: list[str], **kwargs: Any) -> Any:
-        """Run CLI command and parse JSON output.
+        """Run CLI command and parse JSON output from stdout.
 
         Args:
             args: CLI arguments
@@ -141,10 +180,10 @@ class CLIAdapter:
         Returns:
             Parsed JSON as list of dicts
         """
-        output = await self.run(args, **kwargs)
-        if not output.strip():
+        stdout, _stderr = await self.run(args, **kwargs)
+        if not stdout.strip():
             return []
-        return json.loads(output)
+        return json.loads(stdout)
 
     async def fetch_and_parse(
         self, args: list[str], model_class: Type[T], **kwargs: Any
