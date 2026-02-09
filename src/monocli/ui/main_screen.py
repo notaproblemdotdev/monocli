@@ -39,6 +39,7 @@ class MainScreen(Screen):
         ("o", "open_selected", "Open in Browser"),
         ("j", "move_down", "Down"),
         ("k", "move_up", "Up"),
+        ("q", "quit", "Quit"),
     ]
 
     # Reactive state
@@ -308,6 +309,10 @@ class MainScreen(Screen):
             self.mr_container.select_previous(self.active_mr_subsection)
         else:
             self.work_section.select_previous()
+
+    def action_quit(self) -> None:
+        """Quit the application."""
+        self.app.exit()
 
     def on_key(self, event) -> None:
         """Handle key events for navigation.
