@@ -75,7 +75,7 @@ Plans:
 6. UI remains responsive during data fetching (no freezing)
 7. Integration tests verify widget behavior using Textual's Pilot class
 
-**Plans:** 5 plans in 3 waves (3 original + 2 gap closure)
+**Plans:** 7 plans in 3 waves (3 original + 2 gap closure + 2 UAT fixes)
 
 Plans:
 - [x] 03-01-PLAN.md — Create DataTable section widgets (MergeRequestSection, WorkItemSection)
@@ -83,6 +83,8 @@ Plans:
 - [x] 03-03-PLAN.md — Implement keyboard navigation and browser integration
 - [x] 03-04-PLAN.md — Fix Textual workers API (replace deprecated @work decorator)
 - [x] 03-05-PLAN.md — Fix acli auth check command (replace invalid whoami command)
+- [ ] 03-06-PLAN.md — Fix UI/Layout issues (header, spinner centering, MR order)
+- [ ] 03-07-PLAN.md — Fix keyboard navigation issues (o key, Tab focus, q quit)
 
 ### Phase 4: Add Logging with Structlog
 
