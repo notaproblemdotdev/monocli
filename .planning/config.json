@@ -3,7 +3,7 @@
   "depth": "standard",
   "parallelization": true,
   "commit_docs": true,
-  "model_profile": "custom",
+  "model_profile": "balanced",
   "custom_models": {
     "gsd-planner": "anthropic/claude-opus-4-6",
     "gsd-roadmapper": "anthropic/claude-opus-4-6",

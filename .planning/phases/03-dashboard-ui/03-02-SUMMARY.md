@@ -124,6 +124,14 @@ None significant. Minor LSP warnings about unused async results were addressed b
 - ✓ DetectionRegistry correctly instantiated with CLIDetector objects
 - ✓ Integration tests cover layout, loading, data, errors, and switching
 
+## Self-Check: PASSED
+
+- [x] All created files exist on disk
+- [x] All commits present in git log
+- [x] SUMMARY.md written to correct location
+- [x] STATE.md updated with current position
+- [x] ROADMAP.md updated with completion status
+
 ---
 *Phase: 03-dashboard-ui*
 *Completed: 2026-02-08*
