@@ -105,14 +105,16 @@ One dashboard showing all assigned work items and pending PRs/MRs without switch
 
 ## Current Milestone: v2.0 Extended Platform Support
 
-**Goal:** Add Todoist integration and enhanced dashboard features for broader work item coverage
+**Goal:** Add GitHub and Todoist integrations for comprehensive work item coverage across all major platforms
 
 **Target features:**
-- Todoist CLI adapter for task fetching
-- New "Tasks" section in dashboard (or integration with existing sections)
-- Manual refresh capability (r/F5 key)
-- Help screen (? key) for keyboard shortcuts
-- Configuration file support (~/.config/monocli/config.yaml)
+- **GitHub CLI adapter** — Fetch PRs and Issues via `gh` CLI
+- **Todoist CLI adapter** — Fetch tasks via Todoist CLI or API
+- **Unified Tasks section** — Combine Todoist tasks with existing work items
+- **Enhanced PRs section** — Add GitHub PRs alongside GitLab MRs
+- **Manual refresh capability** — r/F5 key to reload data
+- **Help screen** — ? key for keyboard shortcuts reference
+- **Configuration file support** — ~/.config/monocli/config.yaml for preferences
 
 ---
 
