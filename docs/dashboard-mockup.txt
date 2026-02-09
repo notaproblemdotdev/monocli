@@ -1,0 +1,107 @@
+# Mono CLI Dashboard - ASCII Mockup
+
+## Layout Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Mono CLI — Unified Dashboard                                      [q] Quit  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│ ┌─ Merge Requests (GitLab) ───────────────────────────────────────────────┐ │
+│ │                                                                         │ │
+│ │  [!] MR !234  Fix authentication retry logic              Needs Review  │ │
+│ │  [#] MR #567  Update dependency versions                In Progress   │ │
+│ │  [ ] MR #890  Refactor dashboard widgets                Approved      │ │
+│ │                                                                         │ │
+│ │  Tab: Switch • j/k: Navigate • o: Open in browser                       │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│ ╔═ Work Items (Jira) ═════════════════════════════════════════════════════╗ │
+│ ║                                                                         ║ │
+│ ║  [!] PROJ-123  Fix race condition in async workers      High    To Do   ║ │
+│ ║  [#] PROJ-456  Add keyboard navigation support          Medium  Done    ║ │
+│ ║  [ ] PROJ-789  Implement browser integration            Low     In Prog ║ │
+│ ║  [ ] PROJ-101  Write documentation                      Medium  Backlog ║ │
+│ ║                                                                         ║ │
+│ ║  Active Section • o: Open • Enter: Details                              ║ │
+│ ╚═════════════════════════════════════════════════════════════════════════╝ │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Tab: Switch Section  │  j/k: Navigate  │  o: Open Browser  │  q: Quit       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## States
+
+### Loading State
+```
+┌─ Merge Requests (GitLab) ───────────────────────────────────────────────┐
+│                                                                         │
+│                    ⠋ Fetching merge requests...                         │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Empty State
+```
+┌─ Merge Requests (GitLab) ───────────────────────────────────────────────┐
+│                                                                         │
+│                      No merge requests found                            │
+│                                                                         │
+│              Tip: Use 'glab auth login' to authenticate                 │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Error State
+```
+┌─ Work Items (Jira) ─────────────────────────────────────────────────────┐
+│                                                                         │
+│                    ✗ Failed to fetch work items                         │
+│                                                                         │
+│              Error: Not authenticated with Jira                         │
+│              Run: acli auth login                                       │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## Section Switching Animation
+
+```
+┌─ Merge Requests (GitLab) ───────────────────────────────────────────────┐  <- Inactive (dim)
+│                                                                         │
+│  [!] MR !234  Fix authentication retry logic              Needs Review  │
+│  [#] MR #567  Update dependency versions                  In Progress   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+╔═ Work Items (Jira) ═══════════════════════════════════════════════════╗  <- Active (highlight)
+║                                                                         ║
+║  [!] PROJ-123  Fix race condition in async workers      High     To Do  ║
+║  [#] PROJ-456  Add keyboard navigation support          Medium   Done   ║
+║                                                                         ║
+╚═════════════════════════════════════════════════════════════════════════╝
+
+Press Tab to switch sections...
+```
+
+## Key Legend
+
+| Key | Action |
+|-----|--------|
+| Tab | Switch between sections |
+| j / ↓ | Move down |
+| k / ↑ | Move up |
+| o | Open selected item in browser |
+| q | Quit application |
+| Enter | Show item details (future) |
+
+## Color Scheme (if terminal supports it)
+
+- **Active section border**: Blue accent
+- **Inactive section border**: Gray/dim
+- **High priority items**: Red indicator (!)
+- **Medium priority**: Yellow indicator (#)
+- **Low priority**: Gray indicator ( )
+- **Status badges**: Cyan/blue
+- **Key hints**: Dimmed text at bottom
