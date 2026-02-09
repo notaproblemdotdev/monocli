@@ -102,9 +102,10 @@ class JiraAdapter(CLIAdapter):
         """
         logger.debug("Checking Jira authentication")
         try:
-            await self.run(["jira", "auth", "status"], check=True)
+            # Use shorter timeout for auth check (5s)
+            await self.run(["jira", "auth", "status"], check=True, timeout=5.0)
             logger.debug("Jira authenticated")
             return True
-        except (CLIAuthError, CLINotFoundError):
+        except (CLIAuthError, CLINotFoundError, TimeoutError):
             logger.warning("Jira not authenticated")
             return False
