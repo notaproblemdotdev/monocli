@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, HttpUrl
-from typing_extensions import Annotated
+from typing_extensions import TypedDict
 
 
 def parse_datetime(value: datetime | str | None) -> datetime | None:
@@ -30,6 +30,37 @@ def parse_datetime(value: datetime | str | None) -> datetime | None:
 
 # Type alias for datetime fields that accept ISO 8601 strings
 IsoDateTime = Annotated[datetime | None, BeforeValidator(parse_datetime)]
+
+
+class DueInfo(TypedDict, total=False):
+    """Todoist due date information.
+
+    All fields are optional.
+    """
+
+    date: str  # e.g. "2025-03-15"
+    datetime: str | None  # e.g. "2025-03-15T14:00:00Z"
+    string: str  # e.g. "tomorrow at 2pm"
+    is_recurring: bool
+    timezone: str | None
+
+
+@runtime_checkable
+class WorkItem(Protocol):
+    """Protocol for items displayable in the WorkItemSection.
+
+    Both JiraWorkItem and TodoistTask satisfy this protocol structurally.
+    """
+
+    adapter_icon: str
+    adapter_type: str
+
+    def display_key(self) -> str: ...
+    def display_status(self) -> str: ...
+    def is_open(self) -> bool: ...
+
+    @property
+    def url(self) -> str: ...
 
 
 class WorkItemStatus(str, Enum):
@@ -231,6 +262,9 @@ class JiraWorkItem(BaseModel):
 
     model_config = ConfigDict(strict=True, validate_assignment=True)
 
+    adapter_icon: str = "🔴"
+    adapter_type: str = "jira"
+
     key: str = Field(
         ...,
         description="Issue key (e.g., PROJ-123)",
@@ -298,3 +332,80 @@ class JiraWorkItem(BaseModel):
         """Check if work item is open/ongoing."""
         closed_statuses = {"done", "closed", "resolved"}
         return self.status.lower() not in closed_statuses
+
+
+class TodoistTask(BaseModel):
+    """Todoist Task model.
+
+    Validates Todoist task data from the Todoist REST API.
+
+    Attributes:
+        id: Task ID
+        content: Task title/description
+        priority: Task priority (1-4 in Todoist API, 4=urgent, 1=normal)
+        due: Due date information (optional)
+        project_id: ID of the project this task belongs to
+        project_name: Name of the project
+        url: Task URL
+        created_at: When the task was created (ISO 8601 format)
+        is_completed: Whether the task is completed
+        completed_at: When the task was completed (ISO 8601 format)
+    """
+
+    model_config = ConfigDict(strict=True, validate_assignment=True)
+
+    adapter_icon: str = "📝"
+    adapter_type: str = "todoist"
+
+    id: str = Field(..., description="Task ID")
+    content: str = Field(..., description="Task title/description", min_length=1)
+    # NOTE: Todoist API priority is inverted from the UI:
+    # API 1=normal (UI p4), 2=medium (UI p3), 3=high (UI p2), 4=urgent (UI p1)
+    priority: int = Field(..., description="Task priority (1-4, 4=urgent)", ge=1, le=4)
+    due: DueInfo | None = Field(default=None, description="Due date information")
+    project_id: str = Field(..., description="Project ID")
+    project_name: str = Field(..., description="Project name")
+    url_field: HttpUrl = Field(..., description="Task URL", alias="url")
+    created_at: str | None = Field(default=None, description="When the task was created")
+    is_completed: bool = Field(default=False, description="Whether the task is completed")
+    completed_at: str | None = Field(default=None, description="When the task was completed")
+
+    @property
+    def due_date(self) -> str | None:
+        """Extract readable due date from due info."""
+        if not self.due:
+            return None
+        return self.due.get("date") or self.due.get("datetime")
+
+    @property
+    def url(self) -> str:
+        """Get URL as string for browser opening."""
+        return str(self.url_field)
+
+    def display_key(self) -> str:
+        """Todoist task ID for display."""
+        return f"TD-{self.id}"
+
+    def display_status(self) -> str:
+        """Human-readable status."""
+        return "DONE" if self.is_completed else "OPEN"
+
+    def is_open(self) -> bool:
+        """Check if task is still open."""
+        return not self.is_completed
+
+    @classmethod
+    def priority_label(cls, priority: int) -> str:
+        """Map Todoist API priority (1-4) to standard labels.
+
+        NOTE: Todoist API priority is inverted from the UI display:
+        API 4 = p1 (urgent) in UI, API 1 = p4 (normal) in UI.
+
+        Args:
+            priority: Todoist API priority value (1-4)
+
+        Returns:
+            Standard priority label
+        """
+        mapping = {1: "LOW", 2: "MEDIUM", 3: "HIGH", 4: "HIGHEST"}
+        return mapping.get(priority, "MEDIUM")

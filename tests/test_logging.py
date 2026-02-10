@@ -3,11 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-import structlog
-
 from monocli.logging_config import (
-    LOG_DIR,
     configure_logging,
     ensure_log_dir,
     filter_sensitive_data,

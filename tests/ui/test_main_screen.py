@@ -5,10 +5,8 @@ data updates, and error handling using Textual's Pilot.
 """
 
 import pytest
-from textual.pilot import Pilot
 
 from monocli.ui.app import MonoApp
-from monocli.ui.main_screen import MainScreen
 
 
 class TestMainScreen:
@@ -98,6 +96,7 @@ class TestMainScreen:
     async def test_mr_section_updates_with_data(self, app, monkeypatch):
         """Test that MR section updates when data is fetched."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         # Create test MR data

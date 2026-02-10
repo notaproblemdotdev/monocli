@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from monocli.adapters.detection import CLIDetector, DetectionRegistry, DetectionResult
-from monocli.exceptions import CLIAuthError, CLINotFoundError
+from monocli.exceptions import CLIAuthError
 
 
 class TestCLIDetector:

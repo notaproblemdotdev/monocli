@@ -6,7 +6,6 @@ for all platform data models.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 import pytest
@@ -20,7 +19,6 @@ from monocli.models import (
     PullRequest,
     WorkItemStatus,
 )
-
 
 # =============================================================================
 # Fixtures - Valid sample data

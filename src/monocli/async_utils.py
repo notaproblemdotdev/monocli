@@ -4,12 +4,12 @@ import asyncio
 import json
 import shutil
 from collections.abc import Callable
-from typing import Any, TypeVar, Type, cast
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
-from textual.worker import Worker, get_current_worker
+from textual.worker import Worker
 
-from monocli.exceptions import CLIError, CLINotFoundError, raise_for_error
+from monocli.exceptions import CLINotFoundError, raise_for_error
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -34,7 +34,7 @@ async def _cleanup_process(proc: asyncio.subprocess.Process) -> None:
         # but catch InvalidStateError which can occur due to race conditions
         try:
             await asyncio.wait_for(proc.wait(), timeout=1.0)
-        except (asyncio.TimeoutError, ProcessLookupError):
+        except (TimeoutError, ProcessLookupError):
             pass
     except asyncio.InvalidStateError:
         # Process is in an invalid state, likely already being cleaned up
@@ -86,7 +86,7 @@ async def run_cli_command(
             # especially under Textual's event loop.
             try:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Clean up the process
                 if proc.returncode is None:
                     await _cleanup_process(proc)
@@ -186,7 +186,7 @@ class CLIAdapter:
         return json.loads(stdout)
 
     async def fetch_and_parse(
-        self, args: list[str], model_class: Type[T], **kwargs: Any
+        self, args: list[str], model_class: type[T], **kwargs: Any
     ) -> list[T]:
         """Run CLI command, parse JSON, and validate into Pydantic models.
 

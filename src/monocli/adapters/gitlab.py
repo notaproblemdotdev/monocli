@@ -41,17 +41,19 @@ class GitLabAdapter(CLIAdapter):
         group: str,
         assignee: str = "@me",
         author: str | None = None,
+        reviewer: str | None = None,
         state: str | None = None,
     ) -> list[MergeRequest]:
         """Fetch MRs assigned to current user.
 
         Uses glab mr list with --output json to fetch merge requests.
-        Filters by assignee, author, state, and group to show only relevant MRs.
+        Filters by assignee, author, reviewer, state, and group to show only relevant MRs.
 
         Args:
             group: GitLab group to search (required, e.g., "axpo-pl")
             assignee: Assignee filter ("@me" for current user, or username)
             author: Optional author filter (username)
+            reviewer: Optional reviewer filter ("@me" for current user, or username)
             state: Optional state filter ("opened", "closed", "merged", "locked")
 
         Returns:
@@ -75,6 +77,9 @@ class GitLabAdapter(CLIAdapter):
                 author="alice",
                 state="merged"
             )
+
+            # Fetch MRs where current user is a reviewer
+            mrs = await adapter.fetch_assigned_mrs(group="my-group", reviewer="@me")
         """
         # Validate group parameter
         if not group:
@@ -97,15 +102,20 @@ class GitLabAdapter(CLIAdapter):
             "--all",
             "--group",
             group,
-            "--assignee",
-            assignee,
             "--output",
             "json",
         ]
 
+        # Add assignee filter (if empty string, don't add to args to avoid glab conflict)
+        if assignee:
+            args.extend(["--assignee", assignee])
+
         # Add optional filters
         if author:
             args.extend(["--author", author])
+
+        if reviewer:
+            args.extend(["--reviewer", reviewer])
 
         if state:
             # Map state values to glab flags

@@ -5,14 +5,11 @@ arrow keys, browser opening, and section-scoped selection using
 Textual's Pilot API.
 """
 
-from unittest.mock import patch
 
 import pytest
-from textual.pilot import Pilot
 
 from monocli.ui.app import MonoApp
-from monocli.ui.main_screen import MainScreen
-from monocli.ui.sections import MergeRequestSection, WorkItemSection
+from monocli.ui.sections import MergeRequestSection
 
 
 class TestNavigation:
@@ -75,6 +72,7 @@ class TestNavigation:
     async def test_arrow_keys_navigate_within_section(self, app, monkeypatch):
         """Test that arrow keys navigate items in the focused section."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         # Create multiple test MRs
@@ -132,6 +130,7 @@ class TestNavigation:
     async def test_jk_keys_navigate_within_section(self, app, monkeypatch):
         """Test that j/k keys navigate items in the focused section."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         # Create test MRs
@@ -189,6 +188,7 @@ class TestNavigation:
     async def test_o_key_opens_browser(self, app, monkeypatch):
         """Test that 'o' key opens selected item in browser."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         expected_url = "https://gitlab.com/test/project/-/merge_requests/42"
@@ -301,7 +301,8 @@ class TestNavigation:
     async def test_section_scoped_selection(self, app, monkeypatch):
         """Test that selection is scoped to each section independently."""
         from datetime import datetime
-        from monocli.models import MergeRequest, JiraWorkItem
+
+        from monocli.models import JiraWorkItem, MergeRequest
 
         # Create test data for both sections
         test_mrs = [
@@ -475,6 +476,7 @@ class TestSectionWidgetNavigation:
     async def test_get_selected_url_returns_url(self):
         """Test that get_selected_url returns the correct URL."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         # Create a section with data
@@ -519,6 +521,7 @@ class TestSectionWidgetNavigation:
     async def test_select_next_increments_cursor(self):
         """Test that select_next moves cursor down."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         section = MergeRequestSection()
@@ -555,6 +558,7 @@ class TestSectionWidgetNavigation:
     async def test_select_previous_decrements_cursor(self):
         """Test that select_previous moves cursor up."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         section = MergeRequestSection()
@@ -589,6 +593,7 @@ class TestSectionWidgetNavigation:
     async def test_focus_table_focuses_data_table(self):
         """Test that focus_table focuses the internal DataTable."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         section = MergeRequestSection()
@@ -623,6 +628,7 @@ class TestBrowserIntegration:
     async def test_browser_open_failure_handled_gracefully(self, app, monkeypatch):
         """Test that browser open failure is handled gracefully."""
         from datetime import datetime
+
         from monocli.models import MergeRequest
 
         test_mr = MergeRequest(

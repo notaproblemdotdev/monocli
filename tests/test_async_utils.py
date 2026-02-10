@@ -1,9 +1,10 @@
 """Tests for async subprocess utilities."""
 
 import asyncio
+
 import pytest
 
-from monocli.async_utils import _subprocess_semaphore, CLIAdapter, run_cli_command
+from monocli.async_utils import CLIAdapter, _subprocess_semaphore, run_cli_command
 from monocli.exceptions import CLIError, CLINotFoundError
 
 

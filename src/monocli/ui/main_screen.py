@@ -13,7 +13,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Label, Static
+from textual.widgets import Label
 
 from monocli.ui.sections import MergeRequestContainer, WorkItemSection
 from monocli.ui.topbar import TopBar
@@ -216,11 +216,21 @@ class MainScreen(Screen):
             # Fetch MRs assigned to me
             assigned_mrs = await adapter.fetch_assigned_mrs(group=group, assignee="@me")
 
+            # Fetch MRs where I need to do a review
+            pending_review_mrs = await adapter.fetch_assigned_mrs(group=group, reviewer="@me")
+
+            # Combine assigned and pending reviews (removing duplicates by IID)
+            all_assigned = {mr.iid: mr for mr in assigned_mrs}
+            for mr in pending_review_mrs:
+                if mr.iid not in all_assigned:
+                    all_assigned[mr.iid] = mr
+            combined_assigned = list(all_assigned.values())
+
             # Fetch MRs authored by me (pass empty assignee to avoid glab conflict)
             authored_mrs = await adapter.fetch_assigned_mrs(group=group, assignee="", author="@me")
 
             # Update each subsection with its specific data
-            self.mr_container.update_assigned_to_me(assigned_mrs)
+            self.mr_container.update_assigned_to_me(combined_assigned)
             self.mr_container.update_opened_by_me(authored_mrs)
         except Exception as e:
             self.mr_container.set_error(str(e))
@@ -228,35 +238,59 @@ class MainScreen(Screen):
             self.mr_loading = False
 
     async def fetch_work_items(self) -> None:
-        """Fetch work items from Jira.
+        """Fetch work items from Jira and Todoist.
 
         Runs as a background worker with exclusive=True to prevent race conditions.
-        Updates the work items section with data when complete.
+        Updates the work items section with combined data when complete.
         """
         from monocli.adapters.jira import JiraAdapter
+        from monocli.adapters.todoist import TodoistAdapter
+        from monocli.config import get_config
+        from monocli.logging_config import get_logger
+        from monocli.models import WorkItem
+
+        logger = get_logger(__name__)
 
         self.work_section.show_loading()
         self.work_loading = True
 
-        adapter = JiraAdapter()
-        if not adapter.is_available():
-            self.work_section.set_error("acli CLI not found")
+        items: list[WorkItem] = []
+
+        # Fetch from Jira
+        try:
+            jira_adapter = JiraAdapter()
+            if jira_adapter.is_available() and await jira_adapter.check_auth():
+                jira_items = await jira_adapter.fetch_assigned_items()
+                items.extend(jira_items)
+        except Exception as e:
+            logger.warning("Jira fetch failed", exc_info=e)
+
+        # Fetch from Todoist
+        try:
+            config = get_config()
+            if config.todoist_token:
+                todoist_adapter = TodoistAdapter(config.todoist_token)
+                if await todoist_adapter.check_auth():
+                    todoist_tasks = await todoist_adapter.fetch_tasks(
+                        project_names=config.todoist_projects or None,
+                        show_completed=config.todoist_show_completed,
+                        show_completed_for_last=config.todoist_show_completed_for_last,
+                    )
+                    items.extend(todoist_tasks)
+        except ImportError:
+            logger.debug("todoist-api-python not installed, skipping Todoist")
+        except Exception as e:
+            logger.warning("Todoist fetch failed", exc_info=e)
+
+        if not items:
+            self.work_section.set_error("No work item sources available")
             self.work_loading = False
             return
 
-        try:
-            is_auth = await adapter.check_auth()
-            if not is_auth:
-                self.work_section.set_error("acli not authenticated")
-                self.work_loading = False
-                return
-
-            items = await adapter.fetch_assigned_items()
-            self.work_section.update_data(items)
-        except Exception as e:
-            self.work_section.set_error(str(e))
-        finally:
-            self.work_loading = False
+        # Sort: open items first, then by display key for stability
+        items.sort(key=lambda i: (not i.is_open(), i.display_key()))
+        self.work_section.update_data(items)
+        self.work_loading = False
 
     def switch_section(self) -> None:
         """Switch between MR and Work sections.

@@ -3,7 +3,6 @@
 Provides TopBar class that displays the app title with version information.
 """
 
-from textual.containers import Container
 from textual.widgets import Static
 
 
