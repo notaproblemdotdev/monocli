@@ -42,6 +42,11 @@ class MonoApp(App):
         """Handle mount event - push main screen."""
         self.push_screen("main")
 
+    def on_unmount(self) -> None:
+        """Handle unmount event - close database connection."""
+        # Database is managed in main_screen, but we can ensure cleanup here too
+        pass
+
     def action_quit(self) -> None:
         """Action handler for quitting the app."""
         self.exit()

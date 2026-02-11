@@ -1,0 +1,40 @@
+# monocli example configuration
+# Copy this file to ~/.config/monocli/config.yaml and fill in your values
+
+# GitLab configuration
+gitlab:
+  group: "your-gitlab-group"  # Default group for merge request queries
+
+# Jira configuration
+jira:
+  project: "PROJ"  # Default project for issue queries
+
+# Todoist configuration (optional)
+todoist:
+  # SECURE: Tokens are stored in your system keyring (Keychain/Secret Service/Credential Manager)
+  #
+  # To set your token securely, add it here once and monocli will automatically:
+  #   1. Migrate it to your system keyring
+  #   2. Remove it from this file
+  #
+  # Get your API token from: https://todoist.com/app/settings/integrations/developer
+  #
+  # For environment-based auth (CI/CD), use: MONOCLI_TODOIST_TOKEN
+  # token: "your-todoist-api-token-here"  # Will be migrated to keyring on first run
+
+  # Optional: Filter to specific projects (leave empty to show all)
+  projects:
+    - Work
+    - Personal
+
+  # Optional: Include completed tasks
+  show_completed: false
+
+  # Optional: Narrow completed tasks to a time window (24h, 48h, 72h, 7days)
+  # Only applies when show_completed is true
+  show_completed_for_last: "7days"
+
+# Environment variable overrides:
+# - MONOCLI_GITLAB_GROUP overrides gitlab.group
+# - MONOCLI_JIRA_PROJECT overrides jira.project
+# - MONOCLI_TODOIST_TOKEN overrides todoist.token

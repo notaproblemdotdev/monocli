@@ -26,6 +26,12 @@ CONFIG_PATHS = [
 # Valid timeframe values for todoist.show_completed_for_last
 VALID_TIMEFRAMES = {"24h", "48h", "72h", "7days"}
 
+# Default cache TTL in seconds (5 minutes)
+DEFAULT_CACHE_TTL = 300
+
+# Default cache cleanup threshold in days
+DEFAULT_CACHE_CLEANUP_DAYS = 30
+
 
 class ConfigError(Exception):
     """Raised when configuration is invalid or missing."""
@@ -130,6 +136,8 @@ class Config:
             data["jira"] = {}
         if "todoist" not in data:
             data["todoist"] = {}
+        if "cache" not in data:
+            data["cache"] = {}
 
         # GitLab settings
         gitlab_group = os.getenv("MONOCLI_GITLAB_GROUP")
@@ -145,6 +153,18 @@ class Config:
         todoist_token = os.getenv("MONOCLI_TODOIST_TOKEN")
         if todoist_token:
             data["todoist"]["token"] = todoist_token
+
+        # Cache/Database settings from environment
+        db_path = os.getenv("MONOCLI_DB_PATH")
+        if db_path:
+            data["cache"]["db_path"] = db_path
+
+        cache_ttl = os.getenv("MONOCLI_CACHE_TTL")
+        if cache_ttl:
+            try:
+                data["cache"]["ttl_seconds"] = int(cache_ttl)
+            except ValueError:
+                pass
 
         return data
 
@@ -232,6 +252,55 @@ class Config:
             )
             return None
         return value
+
+    @property
+    def db_path(self) -> str | None:
+        """Get the database path from environment or config.
+
+        Returns:
+            Database file path or None if not configured.
+        """
+        # Environment variable takes precedence
+        env_path = os.getenv("MONOCLI_DB_PATH")
+        if env_path:
+            return env_path
+
+        return self._data.get("cache", {}).get("db_path")
+
+    @property
+    def cache_ttl(self) -> int:
+        """Get the cache TTL in seconds.
+
+        Returns:
+            Cache TTL in seconds (default: 300 = 5 minutes).
+        """
+        # Environment variable takes precedence
+        env_ttl = os.getenv("MONOCLI_CACHE_TTL")
+        if env_ttl:
+            try:
+                return int(env_ttl)
+            except ValueError:
+                logger.warning("Invalid MONOCLI_CACHE_TTL value", value=env_ttl)
+
+        return self._data.get("cache", {}).get("ttl_seconds", DEFAULT_CACHE_TTL)
+
+    @property
+    def offline_mode(self) -> bool:
+        """Get whether offline mode is enabled.
+
+        Returns:
+            True if offline mode is enabled, False otherwise.
+        """
+        return os.getenv("MONOCLI_OFFLINE_MODE", "").lower() in ("true", "1", "yes")
+
+    @property
+    def cache_cleanup_days(self) -> int:
+        """Get the cache cleanup threshold in days.
+
+        Returns:
+            Number of days before cache entries are cleaned up (default: 30).
+        """
+        return self._data.get("cache", {}).get("cleanup_days", DEFAULT_CACHE_CLEANUP_DAYS)
 
     def require_gitlab_group(self) -> str:
         """Get GitLab group, raising error if not configured.

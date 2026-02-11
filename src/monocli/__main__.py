@@ -4,11 +4,29 @@ Run the dashboard with: python -m monocli
 """
 
 import argparse
+import asyncio
+import os
 import sys
 
 from monocli import __version__, configure_logging, get_logger
 from monocli.config import ConfigError, validate_keyring_available
 from monocli.ui.app import MonoApp
+
+
+async def clear_cache_command(db_path: str | None = None) -> None:
+    """Clear all cached data from database.
+
+    Args:
+        db_path: Optional path to database file.
+    """
+    from monocli.db.connection import DatabaseManager
+    from monocli.db.cache import CacheManager
+
+    db = DatabaseManager(db_path)
+    async with db:
+        cache = CacheManager()
+        await cache.invalidate("all")
+        print("Cache cleared successfully.")
 
 
 def main() -> None:
@@ -26,11 +44,41 @@ def main() -> None:
         action="version",
         version=f"%(prog)s {__version__}",
     )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Start in offline mode (use cached data only)",
+    )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear all cached data and exit",
+    )
+    parser.add_argument(
+        "--db-path",
+        type=str,
+        help="Path to SQLite database file (default: ~/.config/monocli/monocli.db)",
+    )
     args = parser.parse_args()
 
     configure_logging(debug=args.debug)
     logger = get_logger()
     logger.info("Starting Mono CLI", version=__version__, debug_mode=args.debug)
+
+    # Handle --clear-cache
+    if args.clear_cache:
+        try:
+            asyncio.run(clear_cache_command(args.db_path))
+            return
+        except Exception as e:
+            print(f"Error clearing cache: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Set environment variables from CLI args
+    if args.offline:
+        os.environ["MONOCLI_OFFLINE_MODE"] = "true"
+    if args.db_path:
+        os.environ["MONOCLI_DB_PATH"] = args.db_path
 
     # Validate keyring availability before starting app
     try:
