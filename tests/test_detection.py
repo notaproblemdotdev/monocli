@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from monocli.adapters.detection import CLIDetector, DetectionRegistry, DetectionResult
+from monocli.sources._detection import CLIDetector, DetectionRegistry, DetectionResult
 from monocli.exceptions import CLIAuthError
 
 
@@ -26,7 +26,7 @@ class TestCLIDetector:
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/usr/local/bin/glab"
 
-            with patch("monocli.adapters.detection.run_cli_command") as mock_run:
+            with patch("monocli.sources._detection.run_cli_command") as mock_run:
                 mock_run.return_value = ("", "✓ Logged in to gitlab.com as user")
 
                 result = await detector.check_availability()
@@ -59,7 +59,7 @@ class TestCLIDetector:
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/usr/local/bin/glab"
 
-            with patch("monocli.adapters.detection.run_cli_command") as mock_run:
+            with patch("monocli.sources._detection.run_cli_command") as mock_run:
                 mock_run.side_effect = CLIAuthError(
                     ["glab", "auth", "status"],
                     1,
@@ -83,7 +83,7 @@ class TestCLIDetector:
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/usr/local/bin/glab"
 
-            with patch("monocli.adapters.detection.run_cli_command") as mock_run:
+            with patch("monocli.sources._detection.run_cli_command") as mock_run:
                 mock_run.side_effect = Exception("Network error")
 
                 result = await detector.check_availability()

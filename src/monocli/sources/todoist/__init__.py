@@ -1,23 +1,25 @@
-"""Todoist piece of work source.
+"""Todoist source for work items.
 
-Provides TodoistPieceOfWorkSource for fetching tasks from Todoist.
+Provides TodoistSource for fetching tasks from Todoist.
+Implements PieceOfWorkSource protocol.
 """
 
 from monocli import get_logger
-from monocli.adapters.todoist import TodoistAdapter
-from monocli.models import PieceOfWork, TodoistPieceOfWork
+from monocli.models import PieceOfWork
 from monocli.sources.base import PieceOfWorkSource
+
+from ._api import TodoistAdapter
 
 logger = get_logger(__name__)
 
 
-class TodoistPieceOfWorkSource(PieceOfWorkSource):
+class TodoistSource(PieceOfWorkSource):
     """Source for Todoist tasks.
 
     Wraps the existing TodoistAdapter to provide PieceOfWork items.
 
     Example:
-        source = TodoistPieceOfWorkSource(token="your-token")
+        source = TodoistSource(token="your-token")
 
         # Check if available
         if await source.is_available():

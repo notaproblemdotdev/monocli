@@ -13,7 +13,7 @@ from monocli import get_logger
 
 if TYPE_CHECKING:
     from monocli.models import CodeReview, PieceOfWork
-    from monocli.sources.base import CodeReviewSource, PieceOfWorkSource, Source
+    from monocli.sources.base import CodeReviewSource, PieceOfWorkSource
 
 logger = get_logger(__name__)
 
@@ -28,12 +28,12 @@ class SourceRegistry:
         registry = SourceRegistry()
 
         # Register code review sources
-        registry.register_code_review_source(GitLabCodeReviewSource(group="my-group"))
+        registry.register_code_review_source(GitLabSource(group="my-group"))
         registry.register_code_review_source(GitHubSource())
 
         # Register work item sources
-        registry.register_piece_of_work_source(JiraPieceOfWorkSource())
-        registry.register_piece_of_work_source(TodoistPieceOfWorkSource(token="xxx"))
+        registry.register_piece_of_work_source(JiraSource())
+        registry.register_piece_of_work_source(TodoistSource(token="xxx"))
 
         # Fetch from all sources
         code_reviews = await registry.fetch_all_code_reviews()

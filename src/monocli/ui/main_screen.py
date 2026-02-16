@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import webbrowser
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
@@ -25,8 +26,6 @@ from textual.screen import Screen
 from textual.widgets import Label
 
 from monocli import __version__, get_logger
-from monocli.adapters.jira import JiraAdapter
-from monocli.adapters.todoist import TodoistAdapter
 from monocli.config import ConfigError, get_config
 from monocli.db.cache import CacheManager
 from monocli.db.connection import get_db_manager
@@ -35,8 +34,10 @@ from monocli.models import CodeReview, WorkItem
 from monocli.sources import (
     CodeReviewSource,
     GitHubSource,
-    GitLabCodeReviewSource,
+    GitLabSource,
+    JiraSource,
     SourceRegistry,
+    TodoistSource,
 )
 from monocli.ui.sections import CodeReviewSection, PieceOfWorkSection
 from monocli.ui.topbar import TopBar
@@ -328,8 +329,8 @@ class MainScreen(Screen):
 
         try:
             gitlab_source_args: dict[str, Any] = {"group": get_config().require_gitlab_group()}
-            gitlab_source_mapping: dict[type[GitLabCodeReviewSource], dict[str, Any] | None] = {
-                GitLabCodeReviewSource: gitlab_source_args
+            gitlab_source_mapping: dict[type[GitLabSource], dict[str, Any] | None] = {
+                GitLabSource: gitlab_source_args
             }
         except ConfigError:
             logger.warning("GitLab group not configured, skipping GitLab source")
@@ -365,7 +366,7 @@ class MainScreen(Screen):
             all_assigned: list = []
             all_authored: list = []
 
-            for source_type, reviews in results.items():
+            for _source_type, reviews in results.items():
                 for review in reviews:
                     # Separate into assigned and authored
                     # (for now, put everything in assigned)
@@ -438,29 +439,27 @@ class MainScreen(Screen):
         self.piece_of_work_section.show_loading("Fetching work items...")
 
         # Fetch from Jira
-        jira_items = []
         try:
-            jira_adapter = JiraAdapter()
-            if jira_adapter.is_available() and await jira_adapter.check_auth():
-                jira_items = await jira_adapter.fetch_assigned_items()
+            jira_source = JiraSource()
+            if await jira_source.is_available() and await jira_source.check_auth():
+                jira_items = await jira_source.fetch_items()
                 items.extend(jira_items)
         except Exception as e:
             logger.warning("Jira fetch failed", exc_info=e)
             await self._cache.record_error("work_items", f"Jira: {e}")
 
         # Fetch from Todoist
-        todoist_items = []
         try:
             if config.todoist_token:
-                todoist_adapter = TodoistAdapter(config.todoist_token)
-                if await todoist_adapter.check_auth():
-                    todoist_tasks = await todoist_adapter.fetch_tasks(
-                        project_names=config.todoist_projects or None,
-                        show_completed=config.todoist_show_completed,
-                        show_completed_for_last=config.todoist_show_completed_for_last,
-                    )
-                    todoist_items.extend(todoist_tasks)
-                    items.extend(todoist_tasks)
+                todoist_source = TodoistSource(
+                    token=config.todoist_token,
+                    project_names=config.todoist_projects,
+                    show_completed=config.todoist_show_completed,
+                    show_completed_for_last=config.todoist_show_completed_for_last,
+                )
+                if await todoist_source.check_auth():
+                    todoist_items = await todoist_source.fetch_items()
+                    items.extend(todoist_items)
         except ImportError:
             logger.debug("todoist-api-python not installed, skipping Todoist")
         except Exception as e:
@@ -564,11 +563,8 @@ class MainScreen(Screen):
             url = self.piece_of_work_section.get_selected_url()
 
         if url:
-            try:
+            with suppress(Exception):
                 webbrowser.open(url)
-            except Exception:
-                # Log error but don't crash
-                pass
 
     def action_refresh(self) -> None:
         """Action handler to manually refresh data.

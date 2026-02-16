@@ -4,6 +4,9 @@ Provides GitHubSource for fetching pull requests and issues from GitHub.
 Implements both CodeReviewSource and PieceOfWorkSource protocols.
 """
 
+from contextlib import suppress
+from datetime import datetime
+
 from monocli import get_logger
 from monocli.async_utils import CLIAdapter
 from monocli.models import CodeReview, PieceOfWork
@@ -159,15 +162,11 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource):
 
     def _convert_pr_to_code_review(self, pr: dict) -> CodeReview:
         """Convert a GitHub PR dict to a CodeReview model."""
-        from datetime import datetime
-
         author = pr.get("author", {}).get("login", "Unknown")
         created_at = None
         if pr.get("createdAt"):
-            try:
+            with suppress(ValueError, AttributeError):
                 created_at = datetime.fromisoformat(pr["createdAt"].replace("Z", "+00:00"))
-            except (ValueError, AttributeError):
-                pass
 
         return CodeReview(
             id=str(pr["number"]),

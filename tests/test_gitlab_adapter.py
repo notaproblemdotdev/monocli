@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from monocli.adapters.gitlab import GitLabAdapter
+from monocli.sources.gitlab._cli import GitLabAdapter
 from monocli.exceptions import CLIAuthError, CLINotFoundError
 from monocli.models import MergeRequest
 

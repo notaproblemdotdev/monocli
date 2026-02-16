@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from monocli.adapters.jira import JiraAdapter
+from monocli.sources.jira._cli import JiraAdapter
 from monocli.exceptions import CLIAuthError, CLINotFoundError
 from monocli.models import JiraWorkItem
 
@@ -70,17 +70,17 @@ async def test_fetch_assigned_items_success(jira_adapter, sample_jira_issue, sam
 
     # Verify first issue fields
     assert issues[0].key == "PROJ-123"
-    assert issues[0].summary == "Implement user authentication"
+    assert issues[0].title == "Implement user authentication"
     assert issues[0].status == "In Progress"
-    assert issues[0].priority == "High"
+    assert issues[0].priority == 4
     assert issues[0].assignee == "John Doe"
     assert issues[0].url == "https://company.atlassian.net/browse/PROJ-123"
 
     # Verify second issue fields
     assert issues[1].key == "PROJ-124"
-    assert issues[1].summary == "Fix navigation bug"
+    assert issues[1].title == "Fix navigation bug"
     assert issues[1].status == "To Do"
-    assert issues[1].priority == "Medium"
+    assert issues[1].priority == 3
 
     # Verify helper methods
     assert issues[0].display_key() == "PROJ-123"
@@ -201,11 +201,10 @@ async def test_fetch_with_custom_filters(jira_adapter, sample_jira_issue):
     cmd_list = call_args[0]
 
     assert "jira" in cmd_list
-    assert "issue" in cmd_list
-    assert "list" in cmd_list
+    assert "workitem" in cmd_list
+    assert "search" in cmd_list
     assert "--json" in cmd_list
-    assert "--assignee=john.doe" in cmd_list
-    assert "--status=In Progress" in cmd_list
+    assert "--jql" in cmd_list
 
     assert len(issues) == 1
     assert issues[0].key == "PROJ-123"

@@ -93,9 +93,15 @@ class TestNavigation:
         async def mock_fetch(*args, **kwargs):
             return test_mrs
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         async with app.run_test() as pilot:
             # Wait for data to load
@@ -151,9 +157,15 @@ class TestNavigation:
         async def mock_fetch(*args, **kwargs):
             return test_mrs
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         async with app.run_test() as pilot:
             # Wait for data to load
@@ -208,9 +220,15 @@ class TestNavigation:
         async def mock_fetch(*args, **kwargs):
             return [test_mr]
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         # Mock webbrowser.open
         opened_urls = []
@@ -262,9 +280,11 @@ class TestNavigation:
         async def mock_fetch(*args, **kwargs):
             return [test_item]
 
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.fetch_assigned_items", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+        )
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         # Mock webbrowser.open
         opened_urls = []
@@ -340,15 +360,19 @@ class TestNavigation:
             return test_items
 
         monkeypatch.setattr(
-            "monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
         )
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
         monkeypatch.setattr(
-            "monocli.adapters.jira.JiraAdapter.fetch_assigned_items", mock_fetch_items
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch_items
+        )
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             # Wait for data to load
@@ -414,9 +438,15 @@ class TestNavigation:
         async def mock_fetch(*args, **kwargs):
             return []
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         async with app.run_test() as pilot:
             await pilot.pause()
@@ -439,12 +469,12 @@ class TestNavigation:
         """Test that Tab only cycles between available sections."""
         # Make one CLI unavailable
         monkeypatch.setattr(
-            "monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: False
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: False
         )
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.is_available", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.jira.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
         monkeypatch.setattr(
-            "monocli.adapters.jira.JiraAdapter.fetch_assigned_items",
+            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items",
             lambda *a, **k: [],
         )
 
@@ -645,9 +675,15 @@ class TestBrowserIntegration:
         async def mock_fetch(*args, **kwargs):
             return [test_mr]
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", mock_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         # Mock webbrowser.open to raise an exception
         def mock_webbrowser_fail(url):
@@ -726,9 +762,15 @@ class TestNavigationEdgeCases:
             await asyncio.sleep(0.5)
             return []
 
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs", slow_fetch)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", slow_fetch
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         async with app.run_test() as pilot:
             # Section should be loading
@@ -748,11 +790,15 @@ class TestNavigationEdgeCases:
     async def test_navigation_with_error_section(self, app, monkeypatch):
         """Test navigation works when a section has error."""
         monkeypatch.setattr(
-            "monocli.adapters.gitlab.GitLabAdapter.fetch_assigned_mrs",
+            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs",
             lambda *a, **k: (_ for _ in ()).throw(Exception("Network error")),
         )
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.adapters.gitlab.GitLabAdapter.is_available", lambda self: True)
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+        )
+        monkeypatch.setattr(
+            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+        )
 
         async with app.run_test() as pilot:
             await pilot.pause()

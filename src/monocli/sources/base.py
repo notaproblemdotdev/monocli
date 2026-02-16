@@ -86,7 +86,7 @@ class CodeReviewSource(Source, Protocol):
         ...
 
 
-class CLIBaseAdapter(ABC):
+class CLIBaseAdapter(ABC):  # noqa: B024
     """Base class for CLI-based adapters.
 
     Wraps CLIAdapter from async_utils to provide common functionality.

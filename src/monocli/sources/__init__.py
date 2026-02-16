@@ -12,10 +12,10 @@ from .base import (
     Source,
 )
 from .github import GitHubSource
-from .gitlab import GitLabCodeReviewSource
-from .jira import JiraPieceOfWorkSource
+from .gitlab import GitLabSource
+from .jira import JiraSource
 from .registry import SourceRegistry
-from .todoist import TodoistPieceOfWorkSource
+from .todoist import TodoistSource
 
 __all__ = [
     "Source",
@@ -25,8 +25,8 @@ __all__ = [
     "APIBaseAdapter",
     "SourceRegistry",
     "GitHubSource",
-    "GitLabCodeReviewSource",
-    "JiraPieceOfWorkSource",
-    "TodoistPieceOfWorkSource",
+    "GitLabSource",
+    "JiraSource",
+    "TodoistSource",
     "Source",
 ]

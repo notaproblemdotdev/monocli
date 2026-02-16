@@ -209,7 +209,7 @@ class DetectionRegistry:
 
         # Build results dictionary
         results: dict[str, DetectionResult] = {}
-        for cli_name, raw_result in zip(self._detectors.keys(), results_list):
+        for cli_name, raw_result in zip(self._detectors.keys(), results_list, strict=True):
             if isinstance(raw_result, BaseException):
                 # Handle any exceptions that slipped through
                 results[cli_name] = DetectionResult(

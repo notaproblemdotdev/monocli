@@ -12,7 +12,7 @@ from typing import Any
 
 from monocli.logging_config import get_logger
 
-from ..models import DueInfo, TodoistTask
+from ...models import DueInfo, TodoistTask
 
 logger = get_logger(__name__)
 

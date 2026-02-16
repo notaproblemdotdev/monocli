@@ -1,23 +1,25 @@
-"""Jira piece of work source.
+"""Jira source for work items.
 
-Provides JiraPieceOfWorkSource for fetching work items from Jira.
+Provides JiraSource for fetching work items from Jira.
+Implements PieceOfWorkSource protocol.
 """
 
 from monocli import get_logger
-from monocli.adapters.jira import JiraAdapter
-from monocli.models import JiraPieceOfWork, PieceOfWork
+from monocli.models import PieceOfWork
 from monocli.sources.base import PieceOfWorkSource
+
+from ._cli import JiraAdapter
 
 logger = get_logger(__name__)
 
 
-class JiraPieceOfWorkSource(PieceOfWorkSource):
+class JiraSource(PieceOfWorkSource):
     """Source for Jira work items.
 
     Wraps the existing JiraAdapter to provide PieceOfWork items.
 
     Example:
-        source = JiraPieceOfWorkSource()
+        source = JiraSource()
 
         # Check if available
         if await source.is_available():
@@ -57,6 +59,4 @@ class JiraPieceOfWorkSource(PieceOfWorkSource):
         """
         logger.info("Fetching Jira work items")
         items = await self._adapter.fetch_assigned_items()
-        # JiraAdapter already returns JiraPieceOfWork models
-        # which implement the PieceOfWork protocol
         return items  # type: ignore[return-value]

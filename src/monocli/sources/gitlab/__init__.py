@@ -1,26 +1,25 @@
-"""GitLab code review source.
+"""GitLab source for code reviews.
 
-Provides GitLabCodeReviewSource for fetching merge requests from GitLab.
+Provides GitLabSource for fetching merge requests from GitLab.
+Implements CodeReviewSource protocol.
 """
 
 from monocli import get_logger
-from monocli.adapters.gitlab import GitLabAdapter
 from monocli.models import CodeReview, MergeRequest
 from monocli.sources.base import CodeReviewSource
 
-# Type alias for clarity in this module
-MergeRequestModel = MergeRequest
+from ._cli import GitLabAdapter
 
 logger = get_logger(__name__)
 
 
-class GitLabCodeReviewSource(CodeReviewSource):
+class GitLabSource(CodeReviewSource):
     """Source for GitLab merge requests (code reviews).
 
     Wraps the existing GitLabAdapter to provide CodeReview items.
 
     Example:
-        source = GitLabCodeReviewSource(group="my-group")
+        source = GitLabSource(group="my-group")
 
         # Check if available
         if await source.is_available():
@@ -57,7 +56,7 @@ class GitLabCodeReviewSource(CodeReviewSource):
         """Check if glab is authenticated."""
         return await self._adapter.check_auth()
 
-    def _convert_mr_to_code_review(self, mr: MergeRequestModel) -> CodeReview:
+    def _convert_mr_to_code_review(self, mr: MergeRequest) -> CodeReview:
         """Convert a MergeRequest model to a CodeReview model."""
         author = mr.author.get("name") or mr.author.get("username") or "Unknown"
         return CodeReview(
