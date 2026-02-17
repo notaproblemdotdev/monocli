@@ -321,7 +321,8 @@ class TestNavigation:
         """Test that selection is scoped to each section independently."""
         from datetime import datetime
 
-        from monocli.models import JiraWorkItem, MergeRequest
+        from monocli.models import JiraWorkItem
+        from monocli.models import MergeRequest
 
         # Create test data for both sections
         test_mrs = [

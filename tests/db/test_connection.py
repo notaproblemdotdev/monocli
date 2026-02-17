@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from monocli.db.connection import DatabaseManager, get_db_manager
+from monocli.db.connection import DatabaseManager
+from monocli.db.connection import get_db_manager
 
 
 @pytest.fixture

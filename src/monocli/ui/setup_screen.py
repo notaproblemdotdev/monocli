@@ -28,7 +28,6 @@ from textual.widgets import Select
 
 from monocli import get_logger
 from monocli.config import get_config
-from monocli.sources.base import AdapterStatus
 from monocli.sources.integrations import get_all_integrations
 
 if TYPE_CHECKING:

@@ -1,11 +1,15 @@
 """Tests for CLI detection functionality."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from monocli.sources._detection import CLIDetector, DetectionRegistry, DetectionResult
 from monocli.exceptions import CLIAuthError
+from monocli.sources._detection import CLIDetector
+from monocli.sources._detection import DetectionRegistry
+from monocli.sources._detection import DetectionResult
 
 
 class TestCLIDetector:

@@ -6,15 +6,15 @@ Tests for MergeRequestSection and WorkItemSection using Textual's Pilot API.
 from datetime import datetime
 
 import pytest
-from textual.app import App, ComposeResult
+from textual.app import App
+from textual.app import ComposeResult
 
-from monocli.models import JiraWorkItem, MergeRequest
-from monocli.ui.sections import (
-    MergeRequestContainer,
-    MergeRequestSection,
-    SectionState,
-    WorkItemSection,
-)
+from monocli.models import JiraWorkItem
+from monocli.models import MergeRequest
+from monocli.ui.sections import MergeRequestContainer
+from monocli.ui.sections import MergeRequestSection
+from monocli.ui.sections import SectionState
+from monocli.ui.sections import WorkItemSection
 
 
 class TestApp(App[None]):

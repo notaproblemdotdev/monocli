@@ -4,7 +4,8 @@ Tests for the loading spinner with status text functionality.
 """
 
 import pytest
-from textual.app import App, ComposeResult
+from textual.app import App
+from textual.app import ComposeResult
 
 from monocli.ui.spinner import StatusSpinner
 

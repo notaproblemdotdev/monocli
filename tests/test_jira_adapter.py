@@ -5,13 +5,16 @@ success and error handling without requiring actual acli installation.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from monocli.sources.jira._cli import JiraAdapter
-from monocli.exceptions import CLIAuthError, CLINotFoundError
+from monocli.exceptions import CLIAuthError
+from monocli.exceptions import CLINotFoundError
 from monocli.models import JiraWorkItem
+from monocli.sources.jira._cli import JiraAdapter
 
 
 @pytest.fixture

@@ -6,7 +6,6 @@ Verifies proper visual feedback during state changes.
 
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
@@ -14,15 +13,11 @@ import pytest
 from monocli.db.connection import DatabaseManager
 from monocli.db.work_store import WorkStore
 from monocli.models import CodeReview
-from monocli.ui.sections import SectionState
-from monocli.ui.app import MonoApp
 from monocli.sources.registry import SourceRegistry
-from tests.integration.conftest import (
-    MockGitLabSource,
-    MockGitHubSource,
-    MockJiraSource,
-    MockTodoistSource,
-)
+from monocli.ui.app import MonoApp
+from monocli.ui.sections import SectionState
+from tests.integration.conftest import MockGitLabSource
+from tests.integration.conftest import MockJiraSource
 
 if TYPE_CHECKING:
     from pathlib import Path

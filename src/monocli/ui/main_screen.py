@@ -15,13 +15,13 @@ Features:
 from __future__ import annotations
 
 import asyncio
-import webbrowser
-from contextlib import suppress
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
+from textual.widgets import Footer
 from textual.widgets import Label
 
 from monocli import __version__
@@ -48,23 +48,18 @@ class MainScreen(Screen):
         await app.push_screen(MainScreen())
     """
 
-    # Key bindings
     BINDINGS = [
-        ("tab", "switch_section", "Switch Section"),
-        ("o", "open_selected", "Open in Browser"),
-        ("j", "move_down", "Down"),
-        ("k", "move_up", "Up"),
-        ("r", "refresh", "Refresh"),
-        ("q", "quit", "Quit"),
+        Binding("tab", "switch_section", "Switch Section"),
+        Binding("r", "refresh", "Refresh"),
+        Binding("q", "quit", "Quit"),
     ]
 
-    # Reactive state
-    active_section: reactive[str] = reactive("mr")  # "mr" or "work"
-    active_mr_subsection: reactive[str] = reactive("assigned")  # "assigned" or "opened"
+    active_section: reactive[str] = reactive("mr", bindings=True)
+    active_mr_subsection: reactive[str] = reactive("assigned")
     mr_loading: reactive[bool] = reactive(False)
     work_loading: reactive[bool] = reactive(False)
-    mr_offline: reactive[bool] = reactive(False)  # Shows cached data
-    work_offline: reactive[bool] = reactive(False)  # Shows cached data
+    mr_offline: reactive[bool] = reactive(False)
+    work_offline: reactive[bool] = reactive(False)
 
     # CSS for the main screen layout
     DEFAULT_CSS = """
@@ -114,7 +109,7 @@ class MainScreen(Screen):
     }
 
     #sections-container {
-        height: 100%;
+        height: 1fr;
     }
 
     #content {
@@ -142,24 +137,29 @@ class MainScreen(Screen):
     #data-table {
         height: 100%;
     }
+
+    Footer {
+        background: $surface-darken-2;
+        color: $text;
+        padding: 0 1;
+    }
     """
 
     def compose(self) -> ComposeResult:
         """Compose the main screen with two sections."""
         with Vertical(id="sections-container"):
-            # App title above the code reviews section
             yield TopBar(version=__version__, id="topbar")
 
-            # Top section: Code Reviews (with two subsections)
             with Vertical(id="mr-container"):
                 yield Label("Code Reviews", classes="section-label")
                 self.code_review_section = CodeReviewSection()
                 yield self.code_review_section
 
-            # Bottom section: Work Items
             with Vertical(id="work-container"):
                 self.piece_of_work_section = PieceOfWorkSection()
                 yield self.piece_of_work_section
+
+        yield Footer()
 
     async def on_mount(self) -> None:
         """Handle mount event - initialize database and load data.
@@ -452,33 +452,14 @@ class MainScreen(Screen):
         """Action handler for switching sections."""
         self.switch_section()
 
-    def action_open_selected(self) -> None:
-        """Action handler to open selected item in browser.
-
-        Opens the URL of the currently selected row in the
-        active section's DataTable.
-        """
-        url: str | None = None
-
-        if self.active_section == "mr":
-            url = self.code_review_section.get_selected_url(self.active_mr_subsection)
-        else:
-            url = self.piece_of_work_section.get_selected_url()
-
-        if url:
-            with suppress(Exception):
-                webbrowser.open(url)
-
     def action_refresh(self) -> None:
         """Action handler to manually refresh data.
 
         Invalidates the cache for the current section and fetches fresh data.
         """
         if self.active_section == "mr":
-            # Invalidate MR cache and refresh
             self.run_worker(self._refresh_merge_requests(), exclusive=True)
         else:
-            # Invalidate work items cache and refresh
             self.run_worker(self._refresh_work_items(), exclusive=True)
 
     async def _refresh_merge_requests(self) -> None:
@@ -491,23 +472,8 @@ class MainScreen(Screen):
         await self._store.invalidate(data_type="work_items")
         await self.fetch_work_items()
 
-    def action_move_down(self) -> None:
-        """Action handler to move selection down."""
-        if self.active_section == "mr":
-            self.code_review_section.select_next(self.active_mr_subsection)
-        else:
-            self.piece_of_work_section.select_next()
-
-    def action_move_up(self) -> None:
-        """Action handler to move selection up."""
-        if self.active_section == "mr":
-            self.code_review_section.select_previous(self.active_mr_subsection)
-        else:
-            self.piece_of_work_section.select_previous()
-
     def action_quit(self) -> None:
         """Quit the application."""
-        # Save UI state before quitting
         self.run_worker(self._save_ui_state(), exclusive=True)
         self.app.exit()
 
@@ -521,5 +487,3 @@ class MainScreen(Screen):
         Args:
             event: The key event from Textual.
         """
-        # Key events are primarily handled via BINDINGS and action handlers
-        # This method exists for verification compatibility and future extensibility

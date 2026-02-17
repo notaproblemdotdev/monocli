@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from monocli.db import FetchResult, WorkStore
+from monocli.db import FetchResult
+from monocli.db import WorkStore
 from monocli.db.connection import DatabaseManager
-from monocli.models import CodeReview, PieceOfWork
-from monocli.sources.base import CodeReviewSource, PieceOfWorkSource
+from monocli.models import CodeReview
+from monocli.models import PieceOfWork
+from monocli.sources.base import CodeReviewSource
+from monocli.sources.base import PieceOfWorkSource
 
 
 class MockCodeReviewSource(CodeReviewSource):

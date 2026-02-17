@@ -4,13 +4,13 @@ import asyncio
 import json
 import shutil
 import typing as t
-
 from collections.abc import Callable
 
 from pydantic import BaseModel
 from textual.worker import Worker
 
-from monocli.exceptions import CLINotFoundError, raise_for_error
+from monocli.exceptions import CLINotFoundError
+from monocli.exceptions import raise_for_error
 
 T = t.TypeVar("T", bound=BaseModel)
 
@@ -135,13 +135,12 @@ def fetch_with_worker(
                 stdout, stderr = await run_cli_command(["glab", "mr", "list", "--json"])
                 self.data = stdout
     """
-    from textual.worker import Worker
 
     async def _exclusive_fetch() -> t.Any:
         return await fetch_func(*args, **kwargs)
 
     return t.cast(
-        Worker[t.Any],
+        "Worker[t.Any]",
         widget.run_worker(
             _exclusive_fetch,
             exclusive=True,  # Prevents race conditions

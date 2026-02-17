@@ -6,12 +6,16 @@ environment variables, keyring integration, and error handling.
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 import yaml
 
-from monocli.config import Config, ConfigError, get_config, validate_keyring_available
+from monocli.config import Config
+from monocli.config import ConfigError
+from monocli.config import get_config
+from monocli.config import validate_keyring_available
 
 
 class TestConfigLoad:

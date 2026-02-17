@@ -7,19 +7,24 @@ and data sources. Each test gets isolated resources.
 from __future__ import annotations
 
 import asyncio
-import tempfile
-from collections.abc import AsyncGenerator, Callable, Generator
+from collections.abc import AsyncGenerator
+from collections.abc import Callable
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from monocli.db.connection import DatabaseManager
-from monocli.db.work_store import FetchResult, WorkStore
-from monocli.models import CodeReview, JiraPieceOfWork, TodoistPieceOfWork
-from monocli.sources.base import CodeReviewSource, PieceOfWorkSource
+from monocli.db.work_store import WorkStore
+from monocli.models import CodeReview
+from monocli.models import JiraPieceOfWork
+from monocli.models import TodoistPieceOfWork
+from monocli.sources.base import CodeReviewSource
+from monocli.sources.base import PieceOfWorkSource
 from monocli.sources.registry import SourceRegistry
 from monocli.ui.app import MonoApp
 

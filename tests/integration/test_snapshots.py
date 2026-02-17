@@ -10,16 +10,13 @@ import pytest
 
 from monocli.db.connection import DatabaseManager
 from monocli.db.work_store import WorkStore
-from monocli.models import CodeReview, JiraPieceOfWork, TodoistPieceOfWork
+from monocli.models import CodeReview
+from monocli.models import JiraPieceOfWork
+from monocli.models import TodoistPieceOfWork
 from monocli.sources.registry import SourceRegistry
 from monocli.ui.app import MonoApp
-from tests.integration.conftest import (
-    MockGitLabSource,
-    MockGitHubSource,
-    MockJiraSource,
-    MockTodoistSource,
-)
-
+from tests.integration.conftest import MockGitLabSource
+from tests.integration.conftest import MockJiraSource
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 

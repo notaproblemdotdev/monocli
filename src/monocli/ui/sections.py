@@ -6,18 +6,25 @@ to display merge requests and work items with loading, empty, and error states.
 
 from __future__ import annotations
 
+import webbrowser
+from contextlib import suppress
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.binding import Binding
+from textual.containers import Horizontal
+from textual.containers import Vertical
 from textual.reactive import reactive
-from textual.widgets import DataTable, Label, Static
+from textual.widgets import DataTable
+from textual.widgets import Label
+from textual.widgets import Static
 
 from monocli.ui.spinner import StatusSpinner
 
 if TYPE_CHECKING:
-    from monocli.models import CodeReview, PieceOfWork
+    from monocli.models import CodeReview
+    from monocli.models import PieceOfWork
 
 
 class SectionState:
@@ -36,7 +43,12 @@ class BaseSection(Static):
     and data display using Textual's DataTable widget.
     """
 
-    # Reactive state
+    BINDINGS = [
+        Binding("o", "open_selected", "Open in Browser"),
+        Binding("j", "move_down", "Down"),
+        Binding("k", "move_up", "Up"),
+    ]
+
     state: reactive[str] = reactive(SectionState.LOADING)
     error_message: reactive[str] = reactive("")
     loading_status: reactive[str] = reactive("")
@@ -243,6 +255,21 @@ class BaseSection(Static):
         if self._data_table is not None and self.state == SectionState.DATA:
             self._data_table.action_cursor_up()
 
+    def action_open_selected(self) -> None:
+        """Open the selected item in browser."""
+        url = self.get_selected_url()
+        if url:
+            with suppress(Exception):
+                webbrowser.open(url)
+
+    def action_move_down(self) -> None:
+        """Action handler to move selection down."""
+        self.select_next()
+
+    def action_move_up(self) -> None:
+        """Action handler to move selection up."""
+        self.select_previous()
+
 
 class CodeReviewSubSection(BaseSection):
     """Subsection widget for displaying code reviews (MRs/PRs).
@@ -355,7 +382,7 @@ class CodeReviewSubSection(BaseSection):
             row_key = row_keys[row_index]
             if hasattr(row_key, "value"):
                 return str(row_key.value)
-            elif isinstance(row_key, str):
+            if isinstance(row_key, str):
                 return row_key
 
             # Fallback: try to get row data and find code review
@@ -495,7 +522,7 @@ class CodeReviewSection(Static):
         """
         if section_type == "opened":
             return self.opened_by_me_section
-        elif section_type == "assigned":
+        if section_type == "assigned":
             return self.assigned_to_me_section
         return None
 
@@ -679,7 +706,7 @@ class PieceOfWorkSection(BaseSection):
             row_key = row_keys[row_index]
             if hasattr(row_key, "value"):
                 return str(row_key.value)
-            elif isinstance(row_key, str):
+            if isinstance(row_key, str):
                 return row_key
 
             # Fallback: try to get row data and find work item

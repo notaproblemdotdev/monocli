@@ -4,13 +4,11 @@ Provides source protocols and implementations for fetching data from
 various platforms (GitLab, GitHub, Jira, Todoist, Linear, etc.).
 """
 
-from .base import (
-    APIBaseAdapter,
-    CLIBaseAdapter,
-    CodeReviewSource,
-    PieceOfWorkSource,
-    Source,
-)
+from .base import APIBaseAdapter
+from .base import CLIBaseAdapter
+from .base import CodeReviewSource
+from .base import PieceOfWorkSource
+from .base import Source
 from .github import GitHubSource
 from .gitlab import GitLabSource
 from .jira import JiraSource
@@ -18,15 +16,15 @@ from .registry import SourceRegistry
 from .todoist import TodoistSource
 
 __all__ = [
-    "Source",
-    "PieceOfWorkSource",
-    "CodeReviewSource",
-    "CLIBaseAdapter",
     "APIBaseAdapter",
-    "SourceRegistry",
+    "CLIBaseAdapter",
+    "CodeReviewSource",
     "GitHubSource",
     "GitLabSource",
     "JiraSource",
-    "TodoistSource",
+    "PieceOfWorkSource",
     "Source",
+    "Source",
+    "SourceRegistry",
+    "TodoistSource",
 ]

@@ -7,12 +7,15 @@ API calls directly.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
 from typing import Any
 
 from monocli.logging_config import get_logger
 
-from ...models import DueInfo, TodoistTask
+from ...models import DueInfo
+from ...models import TodoistTask
 
 logger = get_logger(__name__)
 

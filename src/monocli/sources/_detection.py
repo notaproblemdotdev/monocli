@@ -9,7 +9,8 @@ from typing import TypedDict
 
 from monocli import get_logger
 from monocli.async_utils import run_cli_command
-from monocli.exceptions import CLIAuthError, CLINotFoundError
+from monocli.exceptions import CLIAuthError
+from monocli.exceptions import CLINotFoundError
 
 logger = get_logger(__name__)
 

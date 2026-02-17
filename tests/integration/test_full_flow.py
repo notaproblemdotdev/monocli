@@ -8,19 +8,19 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import TYPE_CHECKING, cast
-from unittest.mock import MagicMock, patch
+from typing import TYPE_CHECKING
+from typing import cast
 
 import pytest
 
-from monocli.db.work_store import FetchResult
-from monocli.models import CodeReview, JiraPieceOfWork, TodoistPieceOfWork
+from monocli.models import CodeReview
+from monocli.models import JiraPieceOfWork
+from monocli.models import TodoistPieceOfWork
 from monocli.ui.main_screen import MainScreen
 from monocli.ui.sections import SectionState
 
 if TYPE_CHECKING:
     from monocli.db.work_store import WorkStore
-    from monocli.sources.registry import SourceRegistry
     from monocli.ui.app import MonoApp
 
 
@@ -98,7 +98,7 @@ class TestFullFlow:
 
         async with app_with_mocked_store.run_test(size=(120, 40)) as pilot:
             await pilot.pause()
-            screen = cast(MainScreen, pilot.app.screen)
+            screen = cast("MainScreen", pilot.app.screen)
             await pilot.pause(0.5)
 
             assigned_section = screen.code_review_section.assigned_to_me_section
@@ -116,7 +116,7 @@ class TestFullFlow:
         """Test Tab key navigation between sections."""
         async with app_with_mocked_store.run_test(size=(120, 40)) as pilot:
             await pilot.pause()
-            screen = cast(MainScreen, pilot.app.screen)
+            screen = cast("MainScreen", pilot.app.screen)
 
             assert screen.active_section == "mr"
             assert screen.active_mr_subsection == "assigned"

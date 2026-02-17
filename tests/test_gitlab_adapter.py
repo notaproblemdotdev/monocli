@@ -5,13 +5,15 @@ error handling, and authentication checks.
 """
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import patch
 
 import pytest
 
-from monocli.sources.gitlab._cli import GitLabAdapter
-from monocli.exceptions import CLIAuthError, CLINotFoundError
+from monocli.exceptions import CLIAuthError
+from monocli.exceptions import CLINotFoundError
 from monocli.models import MergeRequest
+from monocli.sources.gitlab._cli import GitLabAdapter
 
 
 class TestGitLabAdapter:

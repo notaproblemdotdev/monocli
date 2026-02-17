@@ -3,13 +3,11 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from monocli.logging_config import (
-    configure_logging,
-    ensure_log_dir,
-    filter_sensitive_data,
-    get_log_file_path,
-    get_logger,
-)
+from monocli.logging_config import configure_logging
+from monocli.logging_config import ensure_log_dir
+from monocli.logging_config import filter_sensitive_data
+from monocli.logging_config import get_log_file_path
+from monocli.logging_config import get_logger
 
 
 class TestLogDirectory:

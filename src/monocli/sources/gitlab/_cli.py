@@ -6,7 +6,8 @@ assigned to or authored by the current user.
 
 from monocli import get_logger
 from monocli.async_utils import CLIAdapter
-from monocli.exceptions import CLIAuthError, CLINotFoundError
+from monocli.exceptions import CLIAuthError
+from monocli.exceptions import CLINotFoundError
 from monocli.models import MergeRequest
 
 logger = get_logger(__name__)
@@ -18,7 +19,7 @@ class GitLabAdapter(CLIAdapter):
         Fetches merge requests using glab's JSON output format and validates
     them into Pydantic MergeRequest models.
 
-        Example:
+    Example:
             adapter = GitLabAdapter()
 
             # Check if glab is available

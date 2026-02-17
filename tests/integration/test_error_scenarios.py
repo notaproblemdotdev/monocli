@@ -6,26 +6,23 @@ Verifies graceful degradation when sources fail.
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
 from monocli.db.connection import DatabaseManager
 from monocli.db.work_store import WorkStore
 from monocli.exceptions import CLIAuthError
-from monocli.models import CodeReview, TodoistPieceOfWork
+from monocli.models import CodeReview
+from monocli.models import TodoistPieceOfWork
 from monocli.sources.registry import SourceRegistry
+from monocli.ui.app import MonoApp
 from monocli.ui.main_screen import MainScreen
 from monocli.ui.sections import SectionState
-from monocli.ui.app import MonoApp
-from tests.integration.conftest import (
-    MockGitLabSource,
-    MockGitHubSource,
-    MockJiraSource,
-    MockTodoistSource,
-)
+from tests.integration.conftest import MockGitLabSource
+from tests.integration.conftest import MockJiraSource
+from tests.integration.conftest import MockTodoistSource
 
 
 @pytest.mark.integration
@@ -45,14 +42,11 @@ class TestTimeoutScenarios:
         - Failed source is tracked in failed_sources
         - Error message is captured
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Create sources: GitLab times out, GitHub succeeds
         gitlab_source = MockGitLabSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("GitLab fetch timed out"),
+            failure_exception=TimeoutError("GitLab fetch timed out"),
         )
 
         github_source = MockGitLabSource(
@@ -103,19 +97,16 @@ class TestTimeoutScenarios:
         - All sources are in failed_sources
         - Appropriate error messages are captured
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Create sources that all timeout
         gitlab_source = MockGitLabSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("Connection timeout"),
+            failure_exception=TimeoutError("Connection timeout"),
         )
 
         github_source = MockGitLabSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("Request timeout"),
+            failure_exception=TimeoutError("Request timeout"),
         )
 
         # Setup
@@ -151,9 +142,6 @@ class TestTimeoutScenarios:
         - fresh=False indicates stale data
         - Failed sources are tracked
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Create source with initial data
         source = MockGitLabSource(
@@ -187,7 +175,7 @@ class TestTimeoutScenarios:
 
         # Make source fail
         source._should_fail = True
-        source._failure_exception = asyncio.TimeoutError("Timeout")
+        source._failure_exception = TimeoutError("Timeout")
 
         # Second fetch - should return cached data
         result2 = await store.get_code_reviews("assigned")
@@ -214,9 +202,6 @@ class TestAuthFailureScenarios:
         - Different error messages for each case
         - UI shows appropriate error state
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Source with auth failure (CLI available but not authenticated)
         auth_fail_source = MockGitLabSource(
@@ -263,11 +248,6 @@ class TestAuthFailureScenarios:
         - Error state is shown when auth fails
         - Error message is displayed to user
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
-        from monocli.ui.app import MonoApp
-        from monocli.ui.work_store_factory import create_work_store
 
         # Create source with auth failure
         auth_fail_source = MockGitLabSource(
@@ -301,7 +281,7 @@ class TestAuthFailureScenarios:
             await pilot.pause()
             await pilot.pause(0.5)
 
-            screen = cast(MainScreen, pilot.app.screen)
+            screen = cast("MainScreen", pilot.app.screen)
 
             # Should show error state
             assert screen.code_review_section.assigned_to_me_section.state == SectionState.ERROR
@@ -326,14 +306,11 @@ class TestMixedErrorScenarios:
         - Failed sources are tracked with their specific errors
         - Partial data is still useful
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Multiple sources with different failure modes
         timeout_source = MockGitLabSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("Connection timeout"),
+            failure_exception=TimeoutError("Connection timeout"),
         )
 
         auth_fail_source = MockGitLabSource(
@@ -393,14 +370,11 @@ class TestMixedErrorScenarios:
         - Successful source on retry
         - Data is available after recovery
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
 
         # Source that fails initially
         flaky_source = MockGitLabSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("Temporary failure"),
+            failure_exception=TimeoutError("Temporary failure"),
         )
 
         # Setup
@@ -456,15 +430,11 @@ class TestWorkItemErrors:
         - Todoist items are still displayed
         - Jira error is tracked
         """
-        from pathlib import Path
-        from monocli.db.connection import DatabaseManager
-        from monocli.sources.registry import SourceRegistry
-        from monocli.models import TodoistPieceOfWork
 
         # Jira times out
         jira_source = MockJiraSource(
             should_fail=True,
-            failure_exception=asyncio.TimeoutError("Jira API timeout"),
+            failure_exception=TimeoutError("Jira API timeout"),
         )
 
         # Todoist succeeds

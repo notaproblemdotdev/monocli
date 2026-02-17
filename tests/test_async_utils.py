@@ -4,8 +4,11 @@ import asyncio
 
 import pytest
 
-from monocli.async_utils import CLIAdapter, _subprocess_semaphore, run_cli_command
-from monocli.exceptions import CLIError, CLINotFoundError
+from monocli.async_utils import CLIAdapter
+from monocli.async_utils import _subprocess_semaphore
+from monocli.async_utils import run_cli_command
+from monocli.exceptions import CLIError
+from monocli.exceptions import CLINotFoundError
 
 
 class TestConcurrentSubprocesses:
@@ -190,7 +193,8 @@ class TestModelParsingIntegration:
     @pytest.mark.asyncio
     async def test_fetch_and_parse_invalid_data_raises_validation_error(self):
         """Test that invalid data raises Pydantic validation error."""
-        from pydantic import BaseModel, ValidationError
+        from pydantic import BaseModel
+        from pydantic import ValidationError
 
         class TestItem(BaseModel):
             id: int

@@ -12,8 +12,10 @@ from typing import TYPE_CHECKING
 from monocli import get_logger
 
 if TYPE_CHECKING:
-    from monocli.models import CodeReview, PieceOfWork
-    from monocli.sources.base import CodeReviewSource, PieceOfWorkSource
+    from monocli.models import CodeReview
+    from monocli.models import PieceOfWork
+    from monocli.sources.base import CodeReviewSource
+    from monocli.sources.base import PieceOfWorkSource
 
 logger = get_logger(__name__)
 
