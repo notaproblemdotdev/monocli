@@ -4,16 +4,28 @@ Provides GitLabSource for fetching merge requests from GitLab.
 Implements CodeReviewSource protocol.
 """
 
+from __future__ import annotations
+
+import shutil
+from typing import TYPE_CHECKING
+
 from monocli import get_logger
-from monocli.models import CodeReview, MergeRequest
+from monocli.config import get_config
+from monocli.models import CodeReview
+from monocli.models import MergeRequest
+from monocli.sources.base import AdapterStatus
 from monocli.sources.base import CodeReviewSource
+from monocli.sources.base import SetupAction
+from monocli.sources.base import SetupCapableSource
+from monocli.sources.base import SetupParam
+from monocli.sources.base import SetupResult
 
 from ._cli import GitLabAdapter
 
 logger = get_logger(__name__)
 
 
-class GitLabSource(CodeReviewSource):
+class GitLabSource(CodeReviewSource, SetupCapableSource):
     """Source for GitLab merge requests (code reviews).
 
     Wraps the existing GitLabAdapter to provide CodeReview items.
@@ -40,21 +52,87 @@ class GitLabSource(CodeReviewSource):
 
     @property
     def source_type(self) -> str:
-        """Return the source type identifier."""
         return "gitlab"
 
     @property
     def source_icon(self) -> str:
-        """Return the source icon emoji."""
         return "🦊"
 
+    @property
+    def adapter_type(self) -> str:
+        return "cli"
+
     async def is_available(self) -> bool:
-        """Check if glab CLI is installed."""
         return self._adapter.is_available()
 
     async def check_auth(self) -> bool:
-        """Check if glab is authenticated."""
         return await self._adapter.check_auth()
+
+    async def get_status(self) -> AdapterStatus:
+        installed = shutil.which("glab") is not None
+        authenticated = False
+        error_message = None
+
+        if installed:
+            try:
+                authenticated = await self._adapter.check_auth()
+                if not authenticated:
+                    error_message = "Not authenticated"
+            except Exception as e:
+                error_message = str(e)
+        else:
+            error_message = "glab CLI not installed"
+
+        return AdapterStatus(
+            installed=installed,
+            authenticated=authenticated,
+            configured=authenticated,
+            error_message=error_message,
+        )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if glab CLI is authenticated",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="login",
+                label="Sign In",
+                icon="🔑",
+                description="Sign in to glab CLI interactively",
+                requires_params=False,
+                external_process=True,
+                external_command="glab auth login",
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Authenticated" if status.authenticated else "Not authenticated",
+            )
+
+        return SetupResult(
+            success=False,
+            error=f"Unknown action: {action_id}",
+        )
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        for action in self.setup_actions:
+            if action.id == action_id and action.external_process:
+                return action.external_command
+        return None
 
     def _convert_mr_to_code_review(self, mr: MergeRequest) -> CodeReview:
         """Convert a MergeRequest model to a CodeReview model."""
@@ -102,3 +180,90 @@ class GitLabSource(CodeReviewSource):
         logger.info("Fetching pending review GitLab MRs", group=self.group)
         mrs = await self._adapter.fetch_assigned_mrs(group=self.group, reviewer="@me")
         return [self._convert_mr_to_code_review(mr) for mr in mrs]
+
+
+class GitLabCLISetupSource(SetupCapableSource):
+    """Setup-only source for GitLab CLI configuration.
+
+    Used by the setup screen to configure GitLab without needing
+    a group parameter.
+    """
+
+    @property
+    def adapter_type(self) -> str:
+        return "cli"
+
+    @property
+    def source_type(self) -> str:
+        return "gitlab"
+
+    @property
+    def source_icon(self) -> str:
+        return "🦊"
+
+    async def get_status(self) -> AdapterStatus:
+        installed = shutil.which("glab") is not None
+        authenticated = False
+        error_message = None
+
+        if installed:
+            try:
+                adapter = GitLabAdapter()
+                authenticated = await adapter.check_auth()
+                if not authenticated:
+                    error_message = "Not authenticated"
+            except Exception as e:
+                error_message = str(e)
+        else:
+            error_message = "glab CLI not installed"
+
+        return AdapterStatus(
+            installed=installed,
+            authenticated=authenticated,
+            configured=authenticated,
+            error_message=error_message,
+        )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if glab CLI is authenticated",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="login",
+                label="Sign In",
+                icon="🔑",
+                description="Sign in to glab CLI interactively",
+                requires_params=False,
+                external_process=True,
+                external_command="glab auth login",
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Authenticated" if status.authenticated else "Not authenticated",
+            )
+
+        return SetupResult(
+            success=False,
+            error=f"Unknown action: {action_id}",
+        )
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        for action in self.setup_actions:
+            if action.id == action_id and action.external_process:
+                return action.external_command
+        return None

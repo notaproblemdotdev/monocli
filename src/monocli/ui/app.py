@@ -4,8 +4,11 @@ Provides MonoApp class - the entry point for the dashboard UI.
 """
 
 from textual.app import App
+from textual.binding import Binding
 
+from monocli.config import get_config
 from monocli.ui.main_screen import MainScreen
+from monocli.ui.setup_screen import SetupScreen
 
 
 class MonoApp(App):
@@ -22,31 +25,41 @@ class MonoApp(App):
         # python -m monocli
     """
 
-    # Screen definitions
     SCREENS = {
         "main": MainScreen,
+        "setup": SetupScreen,
     }
 
-    # App configuration
+    BINDINGS = [
+        Binding("s", "open_setup", "Setup", show=False),
+    ]
+
     TITLE = "Mono CLI"
     SUB_TITLE = "Unified Dashboard"
 
-    # CSS styling
     CSS = """
     Screen {
         background: $surface-darken-1;
     }
     """
 
+    def __init__(self, initial_screen: str = "main") -> None:
+        super().__init__()
+        self._initial_screen = initial_screen
+
     def on_mount(self) -> None:
-        """Handle mount event - push main screen."""
-        self.push_screen("main")
+        config = get_config()
+
+        if not config.is_configured():
+            self.push_screen("setup")
+        else:
+            self.push_screen(self._initial_screen)
 
     def on_unmount(self) -> None:
-        """Handle unmount event - close database connection."""
-        # Database is managed in main_screen, but we can ensure cleanup here too
         pass
 
     def action_quit(self) -> None:
-        """Action handler for quitting the app."""
         self.exit()
+
+    def action_open_setup(self) -> None:
+        self.push_screen("setup")

@@ -4,19 +4,30 @@ Provides GitHubSource for fetching pull requests and issues from GitHub.
 Implements both CodeReviewSource and PieceOfWorkSource protocols.
 """
 
+from __future__ import annotations
+
+import shutil
 from contextlib import suppress
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from monocli import get_logger
-from monocli.models import CodeReview, PieceOfWork
-from monocli.sources.base import CodeReviewSource, PieceOfWorkSource
+from monocli.models import CodeReview
+from monocli.models import PieceOfWork
+from monocli.sources.base import AdapterStatus
+from monocli.sources.base import CodeReviewSource
+from monocli.sources.base import PieceOfWorkSource
+from monocli.sources.base import SetupAction
+from monocli.sources.base import SetupCapableSource
+from monocli.sources.base import SetupParam
+from monocli.sources.base import SetupResult
 
 from ._cli import GitHubAdapter
 
 logger = get_logger(__name__)
 
 
-class GitHubSource(CodeReviewSource, PieceOfWorkSource):
+class GitHubSource(CodeReviewSource, PieceOfWorkSource, SetupCapableSource):
     """Source for GitHub pull requests and issues.
 
     Implements both CodeReviewSource (for PRs) and PieceOfWorkSource (for issues).
@@ -40,21 +51,87 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource):
 
     @property
     def source_type(self) -> str:
-        """Return the source type identifier."""
         return "github"
 
     @property
     def source_icon(self) -> str:
-        """Return the source icon emoji."""
         return "🐙"
 
+    @property
+    def adapter_type(self) -> str:
+        return "cli"
+
     async def is_available(self) -> bool:
-        """Check if gh CLI is installed."""
         return self._adapter.is_available()
 
     async def check_auth(self) -> bool:
-        """Check if gh is authenticated."""
         return await self._adapter.check_auth()
+
+    async def get_status(self) -> AdapterStatus:
+        installed = shutil.which("gh") is not None
+        authenticated = False
+        error_message = None
+
+        if installed:
+            try:
+                authenticated = await self._adapter.check_auth()
+                if not authenticated:
+                    error_message = "Not authenticated"
+            except Exception as e:
+                error_message = str(e)
+        else:
+            error_message = "gh CLI not installed"
+
+        return AdapterStatus(
+            installed=installed,
+            authenticated=authenticated,
+            configured=authenticated,
+            error_message=error_message,
+        )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if gh CLI is authenticated",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="login",
+                label="Sign In",
+                icon="🔑",
+                description="Sign in to gh CLI interactively",
+                requires_params=False,
+                external_process=True,
+                external_command="gh auth login",
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Authenticated" if status.authenticated else "Not authenticated",
+            )
+
+        return SetupResult(
+            success=False,
+            error=f"Unknown action: {action_id}",
+        )
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        for action in self.setup_actions:
+            if action.id == action_id and action.external_process:
+                return action.external_command
+        return None
 
     async def fetch_assigned(self) -> list[CodeReview]:
         """Fetch PRs assigned to the current user.
@@ -147,3 +224,86 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource):
             labels=issue.get("labels", []),
             assignees=issue.get("assignees", []),
         )
+
+
+class GitHubCLISetupSource(SetupCapableSource):
+    """Setup-only source for GitHub CLI configuration."""
+
+    @property
+    def adapter_type(self) -> str:
+        return "cli"
+
+    @property
+    def source_type(self) -> str:
+        return "github"
+
+    @property
+    def source_icon(self) -> str:
+        return "🐙"
+
+    async def get_status(self) -> AdapterStatus:
+        installed = shutil.which("gh") is not None
+        authenticated = False
+        error_message = None
+
+        if installed:
+            try:
+                adapter = GitHubAdapter()
+                authenticated = await adapter.check_auth()
+                if not authenticated:
+                    error_message = "Not authenticated"
+            except Exception as e:
+                error_message = str(e)
+        else:
+            error_message = "gh CLI not installed"
+
+        return AdapterStatus(
+            installed=installed,
+            authenticated=authenticated,
+            configured=authenticated,
+            error_message=error_message,
+        )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if gh CLI is authenticated",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="login",
+                label="Sign In",
+                icon="🔑",
+                description="Sign in to gh CLI interactively",
+                requires_params=False,
+                external_process=True,
+                external_command="gh auth login",
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Authenticated" if status.authenticated else "Not authenticated",
+            )
+
+        return SetupResult(
+            success=False,
+            error=f"Unknown action: {action_id}",
+        )
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        for action in self.setup_actions:
+            if action.id == action_id and action.external_process:
+                return action.external_command
+        return None

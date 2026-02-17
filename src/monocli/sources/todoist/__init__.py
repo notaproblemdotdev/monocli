@@ -4,16 +4,27 @@ Provides TodoistSource for fetching tasks from Todoist.
 Implements PieceOfWorkSource protocol.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from monocli import get_logger
+from monocli import keyring_utils
+from monocli.config import get_config
 from monocli.models import PieceOfWork
+from monocli.sources.base import AdapterStatus
 from monocli.sources.base import PieceOfWorkSource
+from monocli.sources.base import SetupAction
+from monocli.sources.base import SetupCapableSource
+from monocli.sources.base import SetupParam
+from monocli.sources.base import SetupResult
 
 from ._api import TodoistAdapter
 
 logger = get_logger(__name__)
 
 
-class TodoistSource(PieceOfWorkSource):
+class TodoistSource(PieceOfWorkSource, SetupCapableSource):
     """Source for Todoist tasks.
 
     Wraps the existing TodoistAdapter to provide PieceOfWork items.
@@ -52,21 +63,117 @@ class TodoistSource(PieceOfWorkSource):
 
     @property
     def source_type(self) -> str:
-        """Return the source type identifier."""
         return "todoist"
 
     @property
     def source_icon(self) -> str:
-        """Return the source icon emoji."""
         return "📝"
 
+    @property
+    def adapter_type(self) -> str:
+        return "api"
+
     async def is_available(self) -> bool:
-        """Check if the Todoist API is accessible (always True if token provided)."""
-        return True  # API-based, available if we have a token
+        return True
 
     async def check_auth(self) -> bool:
-        """Check if the Todoist token is valid."""
         return await self._adapter.check_auth()
+
+    async def get_status(self) -> AdapterStatus:
+        config = get_config()
+        token = config.todoist_token
+
+        if not token:
+            return AdapterStatus(
+                installed=True,
+                authenticated=False,
+                configured=False,
+                error_message="No API token configured",
+            )
+
+        try:
+            adapter = TodoistAdapter(token)
+            authenticated = await adapter.check_auth()
+            return AdapterStatus(
+                installed=True,
+                authenticated=authenticated,
+                configured=authenticated,
+                error_message=None if authenticated else "Invalid token",
+            )
+        except Exception as e:
+            return AdapterStatus(
+                installed=True,
+                authenticated=False,
+                configured=False,
+                error_message=str(e),
+            )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if Todoist API token is valid",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="configure",
+                label="Configure",
+                icon="⚙️",
+                description="Set up Todoist API token",
+                requires_params=True,
+                external_process=False,
+                params=[
+                    SetupParam(
+                        id="token",
+                        label="API Token",
+                        type="password",
+                        required=True,
+                        secret=True,
+                        placeholder="Enter your Todoist API token",
+                        help_text="Get your token from todoist.com/prefs/integrations",
+                    ),
+                ],
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Token valid" if status.authenticated else "Invalid token",
+            )
+
+        if action_id == "configure":
+            token = params.get("token", "").strip()
+            if not token:
+                return SetupResult(success=False, error="Token is required")
+
+            try:
+                adapter = TodoistAdapter(token)
+                is_valid = await adapter.check_auth()
+                if not is_valid:
+                    return SetupResult(success=False, error="Invalid token")
+
+                keyring_utils.set_secret("adapters.todoist.api.token", token)
+                return SetupResult(success=True, message="Token saved successfully")
+            except Exception as e:
+                return SetupResult(success=False, error=str(e))
+
+        return SetupResult(success=False, error=f"Unknown action: {action_id}")
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        for action in self.setup_actions:
+            if action.id == action_id:
+                return action.params
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        return None
 
     async def fetch_items(self) -> list[PieceOfWork]:
         """Fetch tasks from Todoist.
@@ -84,6 +191,116 @@ class TodoistSource(PieceOfWorkSource):
             show_completed=self.show_completed,
             show_completed_for_last=self.show_completed_for_last,
         )
-        # TodoistAdapter already returns TodoistPieceOfWork models
-        # which implement the PieceOfWork protocol
         return items  # type: ignore[return-value]
+
+
+class TodoistAPISetupSource(SetupCapableSource):
+    """Setup-only source for Todoist API configuration."""
+
+    @property
+    def adapter_type(self) -> str:
+        return "api"
+
+    @property
+    def source_type(self) -> str:
+        return "todoist"
+
+    @property
+    def source_icon(self) -> str:
+        return "📝"
+
+    async def get_status(self) -> AdapterStatus:
+        config = get_config()
+        token = config.todoist_token
+
+        if not token:
+            return AdapterStatus(
+                installed=True,
+                authenticated=False,
+                configured=False,
+                error_message="No API token configured",
+            )
+
+        try:
+            adapter = TodoistAdapter(token)
+            authenticated = await adapter.check_auth()
+            return AdapterStatus(
+                installed=True,
+                authenticated=authenticated,
+                configured=authenticated,
+                error_message=None if authenticated else "Invalid token",
+            )
+        except Exception as e:
+            return AdapterStatus(
+                installed=True,
+                authenticated=False,
+                configured=False,
+                error_message=str(e),
+            )
+
+    @property
+    def setup_actions(self) -> list[SetupAction]:
+        return [
+            SetupAction(
+                id="verify",
+                label="Verify Auth",
+                icon="✓",
+                description="Check if Todoist API token is valid",
+                requires_params=False,
+                external_process=False,
+            ),
+            SetupAction(
+                id="configure",
+                label="Configure",
+                icon="⚙️",
+                description="Set up Todoist API token",
+                requires_params=True,
+                external_process=False,
+                params=[
+                    SetupParam(
+                        id="token",
+                        label="API Token",
+                        type="password",
+                        required=True,
+                        secret=True,
+                        placeholder="Enter your Todoist API token",
+                        help_text="Get your token from todoist.com/prefs/integrations",
+                    ),
+                ],
+            ),
+        ]
+
+    async def execute_setup_action(self, action_id: str, params: dict[str, str]) -> SetupResult:
+        if action_id == "verify":
+            status = await self.get_status()
+            return SetupResult(
+                success=status.authenticated,
+                message="Token valid" if status.authenticated else "Invalid token",
+            )
+
+        if action_id == "configure":
+            token = params.get("token", "").strip()
+            if not token:
+                return SetupResult(success=False, error="Token is required")
+
+            try:
+                adapter = TodoistAdapter(token)
+                is_valid = await adapter.check_auth()
+                if not is_valid:
+                    return SetupResult(success=False, error="Invalid token")
+
+                keyring_utils.set_secret("adapters.todoist.api.token", token)
+                return SetupResult(success=True, message="Token saved successfully")
+            except Exception as e:
+                return SetupResult(success=False, error=str(e))
+
+        return SetupResult(success=False, error=f"Unknown action: {action_id}")
+
+    def get_action_params(self, action_id: str) -> list[SetupParam]:
+        for action in self.setup_actions:
+            if action.id == action_id:
+                return action.params
+        return []
+
+    def get_external_command(self, action_id: str) -> str | None:
+        return None

@@ -1,6 +1,7 @@
 """Entry point for Mono CLI.
 
 Run the dashboard with: python -m monocli
+Run setup with: python -m monocli setup
 """
 
 import os
@@ -32,7 +33,6 @@ def version_callback(value: bool) -> None:
 
 
 def _apply_env_vars(offline: bool, db_path: str | None) -> None:
-    """Set environment variables from CLI args."""
     if offline:
         os.environ["MONOCLI_OFFLINE_MODE"] = "true"
     if db_path:
@@ -40,7 +40,6 @@ def _apply_env_vars(offline: bool, db_path: str | None) -> None:
 
 
 async def _clear_cache(db_path: str | None = None) -> None:
-    """Clear all cached data from database."""
     db = DatabaseManager(db_path)
     async with db:
         from monocli.sources.registry import SourceRegistry
@@ -55,7 +54,7 @@ def main_callback(
         False, "--version", "-v", help="Show version and exit", callback=version_callback
     ),
 ) -> None:
-    """Mono CLI Dashboard - Unified view of PRs and work items."""
+    pass
 
 
 @app.command()
@@ -71,7 +70,6 @@ def tui(
         typer.Option("--clear-cache", help="Clear all cached data and exit"),
     ] = False,
 ) -> None:
-    """Run the TUI dashboard in terminal."""
     import asyncio
 
     configure_logging(debug=debug)
@@ -100,6 +98,24 @@ def tui(
 
 
 @app.command()
+def setup(
+    debug: t.Annotated[bool, typer.Option("--debug", help="Enable debug logging")] = False,
+) -> None:
+    configure_logging(debug=debug)
+    logger = get_logger()
+    logger.info("Starting Mono CLI Setup", version=__version__, debug_mode=debug)
+
+    try:
+        validate_keyring_available()
+    except ConfigError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+    mono_app = MonoApp(initial_screen="setup")
+    mono_app.run()
+
+
+@app.command()
 def web(
     port: t.Annotated[int, typer.Option("--port", "-p", help="Port for web server")] = 6969,
     no_open: t.Annotated[
@@ -113,7 +129,6 @@ def web(
         typer.Option("--db-path", help="Path to SQLite database file"),
     ] = None,
 ) -> None:
-    """Start web server and open dashboard in browser."""
     from textual_serve.server import Server
 
     configure_logging(debug=debug)

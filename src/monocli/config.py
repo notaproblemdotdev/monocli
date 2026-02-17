@@ -7,6 +7,7 @@ Priority: environment variables > keyring > config file > defaults
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,6 @@ DEFAULT_CACHE_CLEANUP_DAYS = 30
 
 class ConfigError(Exception):
     """Raised when configuration is invalid or missing."""
-
 
 
 class Config:
@@ -313,6 +313,193 @@ class Config:
             Number of days before cache entries are cleaned up (default: 30).
         """
         return self._data.get("cache", {}).get("cleanup_days", DEFAULT_CACHE_CLEANUP_DAYS)
+
+    def get_config_path(self) -> Path | None:
+        """Get the path to the config file being used.
+
+        Returns:
+            Path to config file, or None if no config file exists.
+        """
+        for config_path in CONFIG_PATHS:
+            if config_path.exists():
+                return config_path
+        return None
+
+    def _ensure_config_dir(self) -> Path:
+        """Ensure config directory exists and return preferred config path.
+
+        Returns:
+            Path to the primary config file location.
+        """
+        config_path = CONFIG_PATHS[0]
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        return config_path
+
+    def _read_config_file(self) -> dict[str, Any]:
+        """Read current config file contents.
+
+        Returns:
+            Config dictionary, or empty dict if file doesn't exist.
+        """
+        config_path = self.get_config_path()
+        if not config_path or not config_path.exists():
+            return {}
+        try:
+            with open(config_path) as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e:
+            logger.warning("Failed to read config file", error=str(e))
+            return {}
+
+    def _write_config_file(self, data: dict[str, Any]) -> bool:
+        """Atomically write config file.
+
+        Uses write-to-temp-then-rename pattern for atomicity.
+
+        Args:
+            data: Config dictionary to write
+
+        Returns:
+            True if successful, False otherwise
+        """
+        config_path = self._ensure_config_dir()
+
+        try:
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=config_path.parent,
+                prefix=".monocli-config-",
+                suffix=".yaml",
+            )
+            try:
+                with os.fdopen(temp_fd, "w") as f:
+                    yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
+                os.replace(temp_path, config_path)
+                self._data = data
+                return True
+            except Exception:
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+                raise
+        except Exception as e:
+            logger.error("Failed to write config file", error=str(e))
+            return False
+
+    def get_selected_adapter(self, integration: str) -> str | None:
+        """Get the selected adapter type for an integration.
+
+        Args:
+            integration: Integration ID (e.g., "gitlab", "jira")
+
+        Returns:
+            Adapter type ("cli" or "api") or None if not selected
+        """
+        return self._data.get("adapters", {}).get(integration, {}).get("selected")
+
+    def set_selected_adapter(self, integration: str, adapter_type: str) -> bool:
+        """Set the selected adapter type for an integration.
+
+        Args:
+            integration: Integration ID (e.g., "gitlab", "jira")
+            adapter_type: Adapter type ("cli" or "api")
+
+        Returns:
+            True if successful, False otherwise
+        """
+        data = self._read_config_file()
+
+        if "adapters" not in data:
+            data["adapters"] = {}
+        if integration not in data["adapters"]:
+            data["adapters"][integration] = {}
+        if adapter_type not in data["adapters"][integration]:
+            data["adapters"][integration][adapter_type] = {}
+
+        data["adapters"][integration]["selected"] = adapter_type
+
+        return self._write_config_file(data)
+
+    def get_adapter_config(self, integration: str, adapter_type: str) -> dict[str, Any]:
+        """Get configuration for a specific adapter.
+
+        Returns non-secret config from YAML file. Use get_adapter_secret()
+        for secret values stored in keyring.
+
+        Args:
+            integration: Integration ID (e.g., "gitlab", "jira")
+            adapter_type: Adapter type ("cli" or "api")
+
+        Returns:
+            Adapter configuration dictionary (non-secret values only)
+        """
+        return self._data.get("adapters", {}).get(integration, {}).get(adapter_type, {})
+
+    def set_adapter_config(
+        self,
+        integration: str,
+        adapter_type: str,
+        config: dict[str, Any],
+        secrets: dict[str, str] | None = None,
+    ) -> bool:
+        """Set configuration for a specific adapter.
+
+        Stores non-secret config in YAML file and secrets in keyring.
+
+        Args:
+            integration: Integration ID (e.g., "gitlab", "jira")
+            adapter_type: Adapter type ("cli" or "api")
+            config: Non-secret configuration values
+            secrets: Secret values to store in keyring (key -> value)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        data = self._read_config_file()
+
+        if "adapters" not in data:
+            data["adapters"] = {}
+        if integration not in data["adapters"]:
+            data["adapters"][integration] = {}
+
+        data["adapters"][integration][adapter_type] = config
+
+        if secrets:
+            for key, value in secrets.items():
+                keyring_path = f"adapters.{integration}.{adapter_type}.{key}"
+                if not keyring_utils.set_secret(keyring_path, value):
+                    logger.error(f"Failed to store secret: {key}")
+                    return False
+
+        if not self._write_config_file(data):
+            return False
+
+        return True
+
+    def get_adapter_secret(self, integration: str, adapter_type: str, key: str) -> str | None:
+        """Get a secret value for an adapter from keyring.
+
+        Args:
+            integration: Integration ID (e.g., "gitlab", "jira")
+            adapter_type: Adapter type ("cli" or "api")
+            key: Secret key name (e.g., "token")
+
+        Returns:
+            Secret value or None if not found
+        """
+        keyring_path = f"adapters.{integration}.{adapter_type}.{key}"
+        return keyring_utils.get_secret(keyring_path)
+
+    def is_configured(self) -> bool:
+        """Check if any integration is configured.
+
+        Returns:
+            True if at least one adapter is selected and configured
+        """
+        adapters = self._data.get("adapters", {})
+        for integration, config in adapters.items():
+            if config.get("selected"):
+                return True
+        legacy_configured = bool(self.gitlab_group or self.jira_project or self.todoist_token)
+        return legacy_configured
 
     def require_gitlab_group(self) -> str:
         """Get GitLab group, raising error if not configured.

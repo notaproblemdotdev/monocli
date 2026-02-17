@@ -12,9 +12,6 @@ Supported backends (via the 'keyring' package):
 
 from __future__ import annotations
 
-import getpass
-from typing import Any
-
 from monocli import get_logger
 
 logger = get_logger(__name__)
@@ -31,6 +28,18 @@ except ImportError:
 
 # Keyring service name for monocli
 SERVICE_NAME = "monocli"
+
+
+def make_keyring_key(path: str) -> str:
+    """Create keyring key from config path.
+
+    Args:
+        path: Dot-notation config path (e.g., "adapters.gitlab.api.token")
+
+    Returns:
+        Full keyring key (e.g., "monocli:adapters.gitlab.api.token")
+    """
+    return f"{SERVICE_NAME}:{path}"
 
 
 def get_username(service: str) -> str:
@@ -164,6 +173,62 @@ def prompt_and_store_token(service: str, username: str | None = None) -> bool:
     if set_token(service, token, username):
         print(f"✓ {service.upper()} token stored securely in keyring")
         return True
-    else:
-        print(f"✗ Failed to store {service} token")
+    print(f"✗ Failed to store {service} token")
+    return False
+
+
+def get_secret(path: str) -> str | None:
+    """Retrieve a secret using config path notation.
+
+    Args:
+        path: Dot-notation config path (e.g., "adapters.gitlab.api.token")
+
+    Returns:
+        Secret string if found, None otherwise
+    """
+    keyring_key = make_keyring_key(path)
+    try:
+        if keyring is None:
+            return None
+        return keyring.get_password(SERVICE_NAME, keyring_key)
+    except Exception:
+        return None
+
+
+def set_secret(path: str, value: str | None) -> bool:
+    """Store or delete a secret using config path notation.
+
+    Args:
+        path: Dot-notation config path (e.g., "adapters.gitlab.api.token")
+        value: Secret value to store, or None to delete
+
+    Returns:
+        True if successful, False otherwise
+    """
+    keyring_key = make_keyring_key(path)
+    try:
+        if keyring is None:
+            return False
+        if value is None:
+            try:
+                keyring.delete_password(SERVICE_NAME, keyring_key)
+            except keyring.errors.KeyringError:
+                pass
+            return True
+        keyring.set_password(SERVICE_NAME, keyring_key, value)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to store secret at {path}: {e}")
         return False
+
+
+def delete_secret(path: str) -> bool:
+    """Delete a secret using config path notation.
+
+    Args:
+        path: Dot-notation config path (e.g., "adapters.gitlab.api.token")
+
+    Returns:
+        True if successful (or didn't exist), False on error
+    """
+    return set_secret(path, None)
