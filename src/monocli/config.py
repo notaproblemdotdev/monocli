@@ -15,6 +15,7 @@ import yaml
 
 from monocli import get_logger
 from monocli import keyring_utils
+from monocli.config_models import AppConfig
 
 logger = get_logger(__name__)
 
@@ -24,9 +25,6 @@ CONFIG_PATHS = [
     Path.home() / ".monocli.yaml",
     Path.cwd() / ".monocli.yaml",
 ]
-
-# Valid timeframe values for todoist.show_completed_for_last
-VALID_TIMEFRAMES = {"24h", "48h", "72h", "7days"}
 
 # Default cache TTL in seconds (5 minutes)
 DEFAULT_CACHE_TTL = 300
@@ -66,13 +64,13 @@ class Config:
         group = config.gitlab_group  # Returns env var or config file value
     """
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        """Initialize config with data dictionary.
+    def __init__(self, model: AppConfig) -> None:
+        """Initialize config with Pydantic model.
 
         Args:
-            data: Configuration dictionary loaded from file/env.
+            model: Validated AppConfig instance.
         """
-        self._data = data
+        self._model = model
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -85,7 +83,6 @@ class Config:
         Returns:
             Config instance with loaded settings.
         """
-        # Load from file if found
         data: dict[str, Any] = {}
 
         if path:
@@ -97,10 +94,10 @@ class Config:
                     data = cls._load_file(config_path)
                     break
 
-        # Override with environment variables
         data = cls._apply_env_vars(data)
 
-        return cls(data)
+        model = AppConfig.from_dict(data)
+        return cls(model)
 
     @classmethod
     def _load_file(cls, path: Path) -> dict[str, Any]:
@@ -173,30 +170,18 @@ class Config:
 
     @property
     def gitlab_group(self) -> str | None:
-        """Get the configured GitLab group.
-
-        Returns:
-            GitLab group name or None if not configured.
-        """
-        return self._data.get("gitlab", {}).get("group")
+        """Get the configured GitLab group."""
+        return self._model.gitlab.group
 
     @property
     def jira_project(self) -> str | None:
-        """Get the configured Jira project.
-
-        Returns:
-            Jira project key or None if not configured.
-        """
-        return self._data.get("jira", {}).get("project")
+        """Get the configured Jira project."""
+        return self._model.jira.project
 
     @property
     def jira_base_url(self) -> str | None:
-        """Get the configured Jira base URL.
-
-        Returns:
-            Jira base URL (e.g., "https://company.atlassian.net") or None.
-        """
-        return self._data.get("jira", {}).get("base_url")
+        """Get the configured Jira base URL."""
+        return self._model.jira.base_url
 
     @property
     def todoist_token(self) -> str | None:
@@ -210,42 +195,30 @@ class Config:
         Returns:
             Todoist API token or None if not configured.
         """
-        # 1. Check environment variable (highest priority, unchanged)
         env_token = os.getenv("MONOCLI_TODOIST_TOKEN")
         if env_token:
             return env_token
 
-        # 2. Check keyring (secure storage)
         keyring_token = keyring_utils.get_token("todoist")
         if keyring_token:
             return keyring_token
 
-        # 3. Check config file (legacy, triggers migration)
-        config_token = self._data.get("todoist", {}).get("token")
+        config_token = self._model.todoist.token
         if config_token:
-            # Migrate to keyring
             self._migrate_todoist_token_to_keyring(config_token)
-            return config_token  # Return immediately, file cleanup happens in background
+            return config_token
 
         return None
 
     @property
     def todoist_projects(self) -> list[str]:
-        """Get the configured Todoist project filter list.
-
-        Returns:
-            List of project names to filter, or empty list for all projects.
-        """
-        return self._data.get("todoist", {}).get("projects", [])
+        """Get the configured Todoist project filter list."""
+        return self._model.todoist.projects
 
     @property
     def todoist_show_completed(self) -> bool:
-        """Get whether to include completed Todoist tasks.
-
-        Returns:
-            True if completed tasks should be shown, False otherwise.
-        """
-        return self._data.get("todoist", {}).get("show_completed", False)
+        """Get whether to include completed Todoist tasks."""
+        return self._model.todoist.show_completed
 
     @property
     def todoist_show_completed_for_last(self) -> str | None:
@@ -253,66 +226,43 @@ class Config:
 
         Returns:
             Timeframe string ("24h", "48h", "72h", "7days") or None.
-            Invalid values are logged as warnings and return None.
         """
-        value = self._data.get("todoist", {}).get("show_completed_for_last")
-        if value and value not in VALID_TIMEFRAMES:
-            logger.warning(
-                "Invalid todoist.show_completed_for_last value",
-                value=value,
-                valid=list(VALID_TIMEFRAMES),
-            )
-            return None
-        return value
+        value = self._model.todoist.show_completed_for_last
+        return value.value if value else None
 
     @property
     def db_path(self) -> str | None:
-        """Get the database path from environment or config.
-
-        Returns:
-            Database file path or None if not configured.
-        """
-        # Environment variable takes precedence
+        """Get the database path from environment or config."""
         env_path = os.getenv("MONOCLI_DB_PATH")
         if env_path:
             return env_path
-
-        return self._data.get("cache", {}).get("db_path")
+        return self._model.cache.db_path
 
     @property
     def cache_ttl(self) -> int:
-        """Get the cache TTL in seconds.
-
-        Returns:
-            Cache TTL in seconds (default: 300 = 5 minutes).
-        """
-        # Environment variable takes precedence
+        """Get the cache TTL in seconds."""
         env_ttl = os.getenv("MONOCLI_CACHE_TTL")
         if env_ttl:
             try:
                 return int(env_ttl)
             except ValueError:
                 logger.warning("Invalid MONOCLI_CACHE_TTL value", value=env_ttl)
-
-        return self._data.get("cache", {}).get("ttl_seconds", DEFAULT_CACHE_TTL)
+        return self._model.cache.ttl_seconds
 
     @property
     def offline_mode(self) -> bool:
-        """Get whether offline mode is enabled.
-
-        Returns:
-            True if offline mode is enabled, False otherwise.
-        """
+        """Get whether offline mode is enabled."""
         return os.getenv("MONOCLI_OFFLINE_MODE", "").lower() in ("true", "1", "yes")
 
     @property
     def cache_cleanup_days(self) -> int:
-        """Get the cache cleanup threshold in days.
+        """Get the cache cleanup threshold in days."""
+        return self._model.cache.cleanup_days
 
-        Returns:
-            Number of days before cache entries are cleaned up (default: 30).
-        """
-        return self._data.get("cache", {}).get("cleanup_days", DEFAULT_CACHE_CLEANUP_DAYS)
+    @property
+    def show_logs_command(self) -> str:
+        """Get the command to view log files."""
+        return self._model.dev.show_logs_command
 
     def get_config_path(self) -> Path | None:
         """Get the path to the config file being used.
@@ -374,7 +324,7 @@ class Config:
                 with os.fdopen(temp_fd, "w") as f:
                     yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
                 os.replace(temp_path, config_path)
-                self._data = data
+                self._model = AppConfig.from_dict(data)
                 return True
             except Exception:
                 if os.path.exists(temp_path):
@@ -393,7 +343,10 @@ class Config:
         Returns:
             Adapter type ("cli" or "api") or None if not selected
         """
-        return self._data.get("adapters", {}).get(integration, {}).get("selected")
+        adapter = getattr(self._model.adapters, integration, None)
+        if adapter:
+            return adapter.selected
+        return None
 
     def set_selected_adapter(self, integration: str, adapter_type: str) -> bool:
         """Set the selected adapter type for an integration.
@@ -431,7 +384,12 @@ class Config:
         Returns:
             Adapter configuration dictionary (non-secret values only)
         """
-        return self._data.get("adapters", {}).get(integration, {}).get(adapter_type, {})
+        adapter = getattr(self._model.adapters, integration, None)
+        if adapter:
+            config = getattr(adapter, adapter_type, None)
+            if config:
+                return dict(config)
+        return {}
 
     def set_adapter_config(
         self,
@@ -494,9 +452,9 @@ class Config:
         Returns:
             True if at least one adapter is selected and configured
         """
-        adapters = self._data.get("adapters", {})
-        for integration, config in adapters.items():
-            if config.get("selected"):
+        for integration in ["gitlab", "jira", "todoist", "github"]:
+            adapter = getattr(self._model.adapters, integration, None)
+            if adapter and adapter.selected:
                 return True
         legacy_configured = bool(self.gitlab_group or self.jira_project or self.todoist_token)
         return legacy_configured
@@ -555,16 +513,12 @@ class Config:
             ConfigError: If keyring storage fails
         """
         try:
-            # Store in keyring
             if keyring_utils.set_token("todoist", token):
                 logger.debug("Migrated Todoist token to keyring")
 
-                # Remove from config file
                 self._remove_token_from_config_file("todoist")
 
-                # Update in-memory data
-                if "todoist" in self._data and "token" in self._data["todoist"]:
-                    del self._data["todoist"]["token"]
+                self._model.todoist.token = None
             else:
                 logger.error("Failed to migrate token to keyring")
                 raise ConfigError(

@@ -198,8 +198,8 @@ class TestConfigKeyringIntegration:
             # Verify token was stored in keyring
             mock_keyring.set_token.assert_called_once_with("todoist", "config-token")
 
-            # Verify token was removed from in-memory data
-            assert config._data.get("todoist", {}).get("token") is None
+            # Verify token was removed from in-memory model
+            assert config._model.todoist.token is None
 
     @patch("monocli.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
@@ -314,3 +314,31 @@ class TestValidateKeyringAvailable:
 
             assert "System keyring is not available" in str(exc_info.value)
             assert "monocli requires secure credential storage" in str(exc_info.value)
+
+
+class TestConfigShowLogsCommand:
+    """Tests for show_logs_command property."""
+
+    def test_default_show_logs_command(self) -> None:
+        """Test default command when not configured."""
+        with patch.dict(os.environ, {}, clear=True):
+            config = Config.load(Path("/nonexistent/config.yaml"))
+            assert config.show_logs_command == "tail -f {file}"
+
+    def test_custom_show_logs_command(self, tmp_path: Path) -> None:
+        """Test custom command from config file."""
+        config_file = tmp_path / "config.yaml"
+        config_data = {"dev": {"show_logs_command": "less +F {file}"}}
+        config_file.write_text(yaml.dump(config_data))
+
+        config = Config.load(config_file)
+        assert config.show_logs_command == "less +F {file}"
+
+    def test_show_logs_command_with_bat(self, tmp_path: Path) -> None:
+        """Test command with bat (common alternative)."""
+        config_file = tmp_path / "config.yaml"
+        config_data = {"dev": {"show_logs_command": "bat {file}"}}
+        config_file.write_text(yaml.dump(config_data))
+
+        config = Config.load(config_file)
+        assert config.show_logs_command == "bat {file}"

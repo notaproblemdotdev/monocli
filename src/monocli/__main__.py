@@ -15,9 +15,11 @@ from monocli import __version__
 from monocli import configure_logging
 from monocli import get_logger
 from monocli.config import ConfigError
+from monocli.config import get_config
 from monocli.config import validate_keyring_available
 from monocli.db.connection import DatabaseManager
 from monocli.db.work_store import WorkStore
+from monocli.logging_config import get_log_file_path
 from monocli.ui.app import MonoApp
 
 app = typer.Typer(
@@ -113,6 +115,31 @@ def setup(
 
     mono_app = MonoApp(initial_screen="setup")
     mono_app.run()
+
+
+@app.command()
+def logs(
+    debug: t.Annotated[bool, typer.Option("--debug", help="Enable debug logging")] = False,
+) -> None:
+    """Open current log file with configured viewer."""
+    import subprocess
+
+    configure_logging(debug=debug)
+    logger = get_logger()
+    logger.info("Opening logs", version=__version__, debug_mode=debug)
+
+    log_path = get_log_file_path()
+
+    if not log_path.exists():
+        typer.echo(f"No log file found at {log_path}")
+        raise typer.Exit(1)
+
+    config = get_config()
+    cmd_template = config.show_logs_command
+    cmd = cmd_template.replace("{file}", str(log_path))
+
+    logger.info("Executing log viewer", command=cmd, log_path=str(log_path))
+    subprocess.run(cmd, shell=True)
 
 
 @app.command()

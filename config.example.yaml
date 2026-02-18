@@ -34,6 +34,12 @@ todoist:
   # Only applies when show_completed is true
   show_completed_for_last: "7days"
 
+# Development settings
+dev:
+  # Command to view logs. {file} is replaced with log path.
+  # Examples: "tail -f {file}", "less +F {file}", "bat {file}", "code {file}"
+  show_logs_command: "tail -f {file}"
+
 # Environment variable overrides:
 # - MONOCLI_GITLAB_GROUP overrides gitlab.group
 # - MONOCLI_JIRA_PROJECT overrides jira.project
