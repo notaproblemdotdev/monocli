@@ -22,7 +22,6 @@ from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Footer
-from textual.widgets import Label
 
 from monocli import __version__
 from monocli import get_logger
@@ -69,38 +68,22 @@ class MainScreen(Screen):
 
     #mr-container {
         height: 50%;
-        border: solid $primary;
-        padding: 0 1;
+        padding: 0;
     }
 
     #work-container {
         height: 1fr;
-        border: solid $surface-lighten-2;
+        border: round white;
+        border-title-align: left;
         padding: 0 1;
     }
 
-    #mr-container.active {
-        border: solid $success;
-    }
-
     #work-container.active {
-        border: solid $success;
-    }
-
-    #mr-container.offline {
-        border: solid $warning;
+        border: round $success;
     }
 
     #work-container.offline {
-        border: solid $warning;
-    }
-
-    .section-label {
-        text-style: bold;
-        padding: 0;
-        margin: 0 0 1 0;
-        height: auto;
-        text-align: center;
+        border: round $warning;
     }
 
     .offline-indicator {
@@ -151,7 +134,6 @@ class MainScreen(Screen):
             yield TopBar(version=__version__, id="topbar")
 
             with Vertical(id="mr-container"):
-                yield Label("Code Reviews", classes="section-label")
                 self.code_review_section = CodeReviewSection()
                 yield self.code_review_section
 
@@ -190,6 +172,9 @@ class MainScreen(Screen):
         # Step 2: Start background fetch from CLIs (unless offline mode)
         if not config.offline_mode:
             self.run_worker(self._fetch_all_data_from_clis(), exclusive=True)
+
+        # Set border titles
+        self.query_one("#work-container").border_title = "[2] Work Items"
 
     async def _restore_ui_state(self) -> None:
         """Restore last active section and sort preferences from preferences."""
@@ -429,30 +414,52 @@ class MainScreen(Screen):
 
     def watch_active_section(self) -> None:
         """Update visual indicators when active section changes."""
-        mr_container = self.query_one("#mr-container", Vertical)
         work_container = self.query_one("#work-container", Vertical)
+        assigned_section = self.code_review_section.assigned_to_me_section
+        opened_section = self.code_review_section.opened_by_me_section
+
+        assigned_section.remove_class("active")
+        opened_section.remove_class("active")
+        work_container.remove_class("active")
 
         if self.active_section == "mr":
-            mr_container.add_class("active")
-            work_container.remove_class("active")
+            if self.active_mr_subsection == "assigned":
+                assigned_section.add_class("active")
+            else:
+                opened_section.add_class("active")
         else:
             work_container.add_class("active")
-            mr_container.remove_class("active")
 
         # Save UI state
         self.run_worker(self._save_ui_state(), exclusive=True)
 
+    def watch_active_mr_subsection(self) -> None:
+        """Update visual indicators when MR subsection changes."""
+        if self.active_section != "mr":
+            return
+
+        assigned_section = self.code_review_section.assigned_to_me_section
+        opened_section = self.code_review_section.opened_by_me_section
+
+        assigned_section.remove_class("active")
+        opened_section.remove_class("active")
+
+        if self.active_mr_subsection == "assigned":
+            assigned_section.add_class("active")
+        else:
+            opened_section.add_class("active")
+
     def watch_mr_offline(self) -> None:
         """Update visual indicator for offline/cached data."""
-        mr_container = self.query_one("#mr-container", Vertical)
-        label = self.query_one("#mr-container > .section-label", Label)
+        assigned_section = self.code_review_section.assigned_to_me_section
+        opened_section = self.code_review_section.opened_by_me_section
 
         if self.mr_offline:
-            mr_container.add_class("offline")
-            label.update("Pull/merge requests 📴 (offline)")
+            assigned_section.add_class("offline")
+            opened_section.add_class("offline")
         else:
-            mr_container.remove_class("offline")
-            label.update("Pull/merge requests")
+            assigned_section.remove_class("offline")
+            opened_section.remove_class("offline")
 
     def watch_work_offline(self) -> None:
         """Update visual indicator for offline/cached data."""
@@ -460,8 +467,10 @@ class MainScreen(Screen):
 
         if self.work_offline:
             work_container.add_class("offline")
+            work_container.border_title = "[2] Work Items (offline)"
         else:
             work_container.remove_class("offline")
+            work_container.border_title = "[2] Work Items"
 
     def switch_section(self) -> None:
         """Switch between MR and Work sections.

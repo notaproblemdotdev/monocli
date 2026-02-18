@@ -47,25 +47,17 @@ class IntegrationCard(Container):
         height: auto;
         margin: 0 0 1 0;
         padding: 0 1;
-        border: solid $primary;
+        border: round $primary;
+        border-title-align: left;
         background: $surface;
     }
 
     IntegrationCard.configured {
-        border: solid $success;
+        border: round $success;
     }
 
     IntegrationCard.error {
-        border: solid $error;
-    }
-
-    IntegrationCard > .card-header {
-        text-style: bold;
-        margin-bottom: 0;
-    }
-
-    IntegrationCard > .card-description {
-        color: $text-muted;
+        border: round $error;
     }
 
     IntegrationCard .status-row {
@@ -142,10 +134,6 @@ class IntegrationCard(Container):
             self.selected_adapter = ""
 
     def compose(self) -> ComposeResult:
-        with Horizontal(classes="card-header"):
-            yield Label(f"{self._integration.icon} {self._integration.name}")
-            yield Label(self._integration.description, classes="card-description")
-
         with Horizontal(classes="adapter-row"):
             adapters = [(a.upper(), a) for a in self._integration.available_adapters]
             initial_value = (
@@ -192,6 +180,7 @@ class IntegrationCard(Container):
         return self.query_one("#btn-configure", Button)
 
     async def on_mount(self) -> None:
+        self.border_title = f"{self._integration.icon} {self._integration.name}"
         self._load_initial_state()
         await self._check_status()
 
@@ -366,7 +355,7 @@ class SetupActionDialog(Screen):
     SetupActionDialog > Container {
         width: 60;
         max-width: 80;
-        border: thick $primary;
+        border: round $primary;
         background: $surface;
         padding: 1 2;
     }

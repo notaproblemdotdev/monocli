@@ -89,18 +89,6 @@ class BaseSection(Static):
         width: 100%;
     }
 
-    BaseSection #header {
-        height: auto;
-        padding: 0;
-        margin: 0 0 1 0;
-    }
-
-    BaseSection #title {
-        padding: 0;
-        margin: 0;
-        width: 1fr;
-    }
-
     BaseSection #content {
         height: 1fr;
         width: 100%;
@@ -150,16 +138,12 @@ class BaseSection(Static):
 
     def compose(self) -> ComposeResult:
         """Compose the section layout."""
-        with Vertical():
-            with Horizontal(id="header"):
-                yield Label(self.section_title, id="title")
-
-            with Vertical(id="content"):
-                with Vertical(id="content-wrapper"):
-                    yield DataTable[str](id="data-table")
-                    yield Label("", id="message")
-                with Horizontal(id="spinner-row"):
-                    yield StatusSpinner("", id="spinner")
+        with Vertical(), Vertical(id="content"):
+            with Vertical(id="content-wrapper"):
+                yield DataTable[str](id="data-table")
+                yield Label("", id="message")
+            with Horizontal(id="spinner-row"):
+                yield StatusSpinner("", id="spinner")
 
     def on_mount(self) -> None:
         """Handle mount event."""
@@ -200,13 +184,6 @@ class BaseSection(Static):
             spinner.stop()
             table.styles.display = "block"
             message.styles.display = "none"
-
-        # Update title with count if in DATA state
-        title_label = self.query_one("#title", Label)
-        if self.state == SectionState.DATA and hasattr(self, "_item_count"):
-            title_label.update(f"{self.section_title} ({self._item_count})")
-        else:
-            title_label.update(self.section_title)
 
     def _get_empty_message(self) -> str:
         """Get the empty state message. Override in subclasses."""
@@ -408,7 +385,7 @@ class CodeReviewSubSection(BaseSection):
 
     DEFAULT_CSS = """
     CodeReviewSubSection {
-        border: round $surface-lighten-2;
+        border: round white;
         border-title-align: left;
         padding: 0 1;
     }
@@ -437,6 +414,14 @@ class CodeReviewSubSection(BaseSection):
         super().on_mount()
         if self._data_table:
             self._setup_table()
+        self._update_border_title()
+
+    def _update_border_title(self) -> None:
+        """Update the border title with count."""
+        if self.state == SectionState.DATA:
+            self.border_title = f"{self.section_title} ({self._item_count})"
+        else:
+            self.border_title = self.section_title
 
     def _setup_table(self) -> None:
         """Setup DataTable columns with reserved space for sort indicators."""
@@ -640,9 +625,9 @@ class CodeReviewSection(Static):
         """Initialize the code review container with two subsections."""
         super().__init__(*args, **kwargs)
         self.opened_by_me_section = CodeReviewSubSection(id="cr-opened-by-me")
-        self.opened_by_me_section.section_title = "Opened by me"
+        self.opened_by_me_section.section_title = "[2] Code reviews from me"
         self.assigned_to_me_section = CodeReviewSubSection(id="cr-assigned-to-me")
-        self.assigned_to_me_section.section_title = "Assigned / Pending review"
+        self.assigned_to_me_section.section_title = "[1] Code reviews for me"
 
     def compose(self) -> ComposeResult:
         """Compose the container with two code review subsections."""
