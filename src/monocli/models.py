@@ -578,3 +578,145 @@ class TodoistPieceOfWork(BaseModel):
 
 # Backwards compatibility alias
 TodoistTask = TodoistPieceOfWork
+
+
+class AzureDevOpsPullRequest(BaseModel):
+    """Azure DevOps Pull Request model.
+
+    Validates Azure DevOps PR data from REST API.
+
+    Attributes:
+        pullRequestId: PR number/ID
+        title: PR title
+        status: PR state ("active", "abandoned", "completed")
+        createdBy: Dict containing creator info with 'displayName'
+        repository: Dict containing repository info with 'id' and 'name'
+        sourceRefName: Source branch ref (e.g., "refs/heads/feature/foo")
+        targetRefName: Target branch ref
+        creationDate: Creation timestamp
+        isDraft: Whether the PR is a draft
+        web_url: Browser URL for the PR (set by adapter)
+    """
+
+    model_config = ConfigDict(strict=True, validate_assignment=True)
+
+    pullRequestId: int = Field(..., description="Pull request ID", ge=1)
+    title: str = Field(..., description="Pull request title", min_length=1)
+    status: str = Field(
+        ...,
+        description="Pull request status",
+        pattern=r"^(active|abandoned|completed|notSet)$",
+    )
+    createdBy: dict[str, t.Any] = Field(
+        ...,
+        description="Creator information with 'displayName' key",
+    )
+    repository: dict[str, t.Any] = Field(
+        ...,
+        description="Repository information with 'id' and 'name' keys",
+    )
+    sourceRefName: str = Field(..., description="Source branch ref")
+    targetRefName: str = Field(..., description="Target branch ref")
+    creationDate: IsoDateTime = Field(
+        default=None,
+        description="When the PR was created (ISO 8601 format)",
+    )
+    isDraft: bool = Field(default=False, description="Whether this is a draft PR")
+    web_url: str | None = Field(default=None, description="PR browser URL")
+
+    def display_key(self) -> str:
+        """Return formatted key for display."""
+        return f"#{self.pullRequestId}"
+
+    def display_status(self) -> str:
+        """Return normalized status string."""
+        return self.status.upper()
+
+    def is_open(self) -> bool:
+        """Check if PR is open/ongoing."""
+        return self.status == "active"
+
+
+class AzureDevOpsPieceOfWork(BaseModel):
+    """Azure DevOps Work Item model.
+
+    Validates Azure DevOps work item data from REST API.
+    Implements the PieceOfWork protocol.
+
+    Attributes:
+        id: Work item ID
+        fields: Dict containing work item fields including:
+            - System.Title: Work item title
+            - System.State: Current state
+            - System.AssignedTo: Assignee info
+            - Microsoft.VSTS.Common.Priority: Priority (1-4)
+        url: Work item API URL
+    """
+
+    model_config = ConfigDict(strict=True, validate_assignment=True)
+
+    adapter_icon: str = "🔷"
+    adapter_type: str = "azuredevops"
+
+    id: int = Field(..., description="Work item ID", ge=1)
+    fields: dict[str, t.Any] = Field(
+        ...,
+        description="Work item fields including System.Title, System.State",
+    )
+    url: str = Field(..., description="Work item API URL")
+
+    @property
+    def title(self) -> str:
+        """Get the work item title."""
+        value = self.fields.get("System.Title", "")
+        return str(value) if value is not None else ""
+
+    @property
+    def status(self) -> str:
+        """Get the work item state."""
+        value = self.fields.get("System.State", "Unknown")
+        return str(value) if value is not None else "Unknown"
+
+    @property
+    def priority(self) -> int | None:
+        """Get the work item priority (1-4)."""
+        value = self.fields.get("Microsoft.VSTS.Common.Priority")
+        if isinstance(value, int):
+            return value
+        return None
+
+    @property
+    def assignee(self) -> str | None:
+        """Get the assignee display name."""
+        assignee_field = self.fields.get("System.AssignedTo")
+        if isinstance(assignee_field, dict):
+            return assignee_field.get("displayName")
+        return None
+
+    @property
+    def due_date(self) -> str | None:
+        """Azure DevOps work items don't have a standard due date field."""
+        return None
+
+    def display_key(self) -> str:
+        """Return formatted key for display."""
+        return f"#{self.id}"
+
+    def display_status(self) -> str:
+        """Return normalized status string."""
+        status_name = self.status.upper()
+        status_map = {
+            "TO DO": "TODO",
+            "IN PROGRESS": "IN PROGRESS",
+            "DONE": "DONE",
+            "BLOCKED": "BLOCKED",
+            "CLOSED": "DONE",
+            "RESOLVED": "DONE",
+            "REMOVED": "REMOVED",
+        }
+        return status_map.get(status_name, status_name)
+
+    def is_open(self) -> bool:
+        """Check if work item is open/ongoing."""
+        closed_statuses = {"Closed", "Done", "Removed", "Resolved"}
+        return self.status not in closed_statuses

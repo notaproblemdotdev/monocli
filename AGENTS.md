@@ -8,6 +8,9 @@ This project uses **uv** for all development tasks. Never use `python`, `pip`, o
 # Run the app
 uv run python -m monocli
 
+# Run with hot reload (for UI development)
+uv run monocli-dev
+
 # Run tests
 uv run pytest
 uv run pytest tests/ui/test_sections.py -v   # specific test file
