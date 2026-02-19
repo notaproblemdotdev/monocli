@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 monocli = "monocli.__main__:app"
+monocli-dev = "monocli.__main__:run_dev"
 
 [project.optional-dependencies]
 dev = [

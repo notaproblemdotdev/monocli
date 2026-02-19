@@ -38,6 +38,7 @@ INTEGRATIONS_BY_ID: dict[str, IntegrationMeta] = {}
 
 def _register_all_integrations() -> None:
     """Register all built-in integrations."""
+    from monocli.sources.azuredevops import AzureDevOpsAPISetupSource
     from monocli.sources.github import GitHubCLISetupSource
     from monocli.sources.gitlab import GitLabCLISetupSource
     from monocli.sources.jira import JiraCLISetupSource
@@ -95,6 +96,19 @@ def _register_all_integrations() -> None:
             api_docs_url="https://developer.todoist.com/rest/v2",
             features=["tasks"],
             create_api_adapter=TodoistAPISetupSource,
+        )
+    )
+
+    register_integration(
+        IntegrationMeta(
+            id="azuredevops",
+            name="Azure DevOps",
+            icon="🔷",
+            description="Pull requests and work items from Azure DevOps",
+            available_adapters=["api"],
+            api_docs_url="https://learn.microsoft.com/en-us/rest/api/azure/devops",
+            features=["pull_requests", "work_items"],
+            create_api_adapter=AzureDevOpsAPISetupSource,
         )
     )
 

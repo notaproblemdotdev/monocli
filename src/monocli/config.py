@@ -154,6 +154,14 @@ class Config:
         if todoist_token:
             data["todoist"]["token"] = todoist_token
 
+        # Azure DevOps settings
+        if "azuredevops" not in data:
+            data["azuredevops"] = {}
+
+        azuredevops_token = os.getenv("MONOCLI_AZUREDEVOPS_TOKEN")
+        if azuredevops_token:
+            data["azuredevops"]["token"] = azuredevops_token
+
         # Cache/Database settings from environment
         db_path = os.getenv("MONOCLI_DB_PATH")
         if db_path:
@@ -229,6 +237,37 @@ class Config:
         """
         value = self._model.todoist.show_completed_for_last
         return value.value if value else None
+
+    @property
+    def azuredevops_token(self) -> str | None:
+        """Get Azure DevOps PAT token.
+
+        Priority: env var > keyring
+
+        Returns:
+            Azure DevOps PAT token or None if not configured.
+        """
+        env_token = os.getenv("MONOCLI_AZUREDEVOPS_TOKEN")
+        if env_token:
+            return env_token
+
+        keyring_token = keyring_utils.get_token("azuredevops")
+        if keyring_token:
+            return keyring_token
+
+        return None
+
+    @property
+    def azuredevops_organizations(self) -> list[dict[str, str]]:
+        """Get configured Azure DevOps orgs/projects.
+
+        Returns:
+            List of dicts with 'organization' and 'project' keys.
+        """
+        return [
+            {"organization": org.organization, "project": org.project}
+            for org in self._model.azuredevops.organizations
+        ]
 
     @property
     def db_path(self) -> str | None:
@@ -457,11 +496,13 @@ class Config:
         Returns:
             True if at least one adapter is selected and configured
         """
-        for integration in ["gitlab", "jira", "todoist", "github"]:
+        for integration in ["gitlab", "jira", "todoist", "github", "azuredevops"]:
             adapter = getattr(self._model.adapters, integration, None)
             if adapter and adapter.selected:
                 return True
-        legacy_configured = bool(self.gitlab_group or self.jira_project or self.todoist_token)
+        legacy_configured = bool(
+            self.gitlab_group or self.jira_project or self.todoist_token or self.azuredevops_token
+        )
         return legacy_configured
 
     def require_gitlab_group(self) -> str:

@@ -5,6 +5,7 @@ Run setup with: python -m monocli setup
 """
 
 import os
+import subprocess
 import sys
 import typing as t
 import webbrowser
@@ -30,7 +31,7 @@ app = typer.Typer(
 
 def version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"monocli {__version__}")
+        typer.echo(f"{__version__}")
         raise typer.Exit()
 
 
@@ -122,8 +123,6 @@ def logs(
     debug: t.Annotated[bool, typer.Option("--debug", help="Enable debug logging")] = False,
 ) -> None:
     """Open current log file with configured viewer."""
-    import subprocess
-
     configure_logging(debug=debug)
     logger = get_logger()
     logger.info("Opening logs", version=__version__, debug_mode=debug)
@@ -189,6 +188,19 @@ def web(
         webbrowser.open(url)
 
     server.serve()
+
+
+def run_dev() -> None:
+    """Run monocli with Textual hot reload (for development)."""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = "src"
+
+    result = subprocess.run(
+        ["uv", "run", "textual", "run", "--dev", "monocli.ui.dev:app"],
+        check=False,
+        env=env,
+    )
+    sys.exit(result.returncode)
 
 
 if __name__ == "__main__":

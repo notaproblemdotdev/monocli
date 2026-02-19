@@ -51,6 +51,23 @@ class TodoistConfig(BaseModel):
     show_completed_for_last: Timeframe | None = None
 
 
+class AzureDevOpsOrgProject(BaseModel):
+    """Single Azure DevOps organization/project configuration."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    organization: str
+    project: str
+
+
+class AzureDevOpsConfig(BaseModel):
+    """Azure DevOps configuration."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    organizations: list[AzureDevOpsOrgProject] = Field(default_factory=list)
+
+
 class CacheConfig(BaseModel):
     """Cache/Database configuration."""
 
@@ -104,6 +121,7 @@ class AdaptersConfig(BaseModel):
     jira: IntegrationAdapters = Field(default_factory=IntegrationAdapters)
     todoist: IntegrationAdapters = Field(default_factory=IntegrationAdapters)
     github: IntegrationAdapters = Field(default_factory=IntegrationAdapters)
+    azuredevops: IntegrationAdapters = Field(default_factory=IntegrationAdapters)
 
 
 class AppConfig(BaseModel):
@@ -114,6 +132,7 @@ class AppConfig(BaseModel):
     gitlab: GitLabConfig = Field(default_factory=GitLabConfig)
     jira: JiraConfig = Field(default_factory=JiraConfig)
     todoist: TodoistConfig = Field(default_factory=TodoistConfig)
+    azuredevops: AzureDevOpsConfig = Field(default_factory=AzureDevOpsConfig)
     cache: CacheConfig = Field(default_factory=CacheConfig)
     dev: DevConfig = Field(default_factory=DevConfig)
     ui: UIConfig = Field(default_factory=UIConfig)

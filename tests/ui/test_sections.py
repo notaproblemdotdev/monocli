@@ -9,7 +9,6 @@ import pytest
 from textual.app import App
 from textual.app import ComposeResult
 
-from monocli.models import CodeReview
 from monocli.models import JiraWorkItem
 from monocli.models import MergeRequest
 from monocli.ui.sections import CodeReviewSection
