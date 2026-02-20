@@ -7,8 +7,8 @@ Textual's Pilot API.
 
 import pytest
 
-from monocli.ui.app import MonoApp
-from monocli.ui.sections import MergeRequestSection
+from monocle.ui.app import MonoApp
+from monocle.ui.sections import MergeRequestSection
 
 
 class TestNavigation:
@@ -72,7 +72,7 @@ class TestNavigation:
         """Test that arrow keys navigate items in the focused section."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         # Create multiple test MRs
         test_mrs = [
@@ -94,13 +94,13 @@ class TestNavigation:
             return test_mrs
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:
@@ -136,7 +136,7 @@ class TestNavigation:
         """Test that j/k keys navigate items in the focused section."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         # Create test MRs
         test_mrs = [
@@ -158,13 +158,13 @@ class TestNavigation:
             return test_mrs
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:
@@ -200,7 +200,7 @@ class TestNavigation:
         """Test that 'o' key opens selected item in browser."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         expected_url = "https://gitlab.com/test/project/-/merge_requests/42"
 
@@ -221,13 +221,13 @@ class TestNavigation:
             return [test_mr]
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         # Mock webbrowser.open
@@ -260,7 +260,7 @@ class TestNavigation:
     @pytest.mark.asyncio
     async def test_o_key_with_work_section(self, app, monkeypatch):
         """Test that 'o' key opens work item in browser."""
-        from monocli.models import JiraWorkItem
+        from monocle.models import JiraWorkItem
 
         expected_url = "https://jira.example.com/browse/PROJ-123"
 
@@ -281,10 +281,10 @@ class TestNavigation:
             return [test_item]
 
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         # Mock webbrowser.open
         opened_urls = []
@@ -321,8 +321,8 @@ class TestNavigation:
         """Test that selection is scoped to each section independently."""
         from datetime import datetime
 
-        from monocli.models import JiraWorkItem
-        from monocli.models import MergeRequest
+        from monocle.models import JiraWorkItem
+        from monocle.models import MergeRequest
 
         # Create test data for both sections
         test_mrs = [
@@ -361,19 +361,19 @@ class TestNavigation:
             return test_items
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch_items
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch_items
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             # Wait for data to load
@@ -440,13 +440,13 @@ class TestNavigation:
             return []
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:
@@ -470,12 +470,12 @@ class TestNavigation:
         """Test that Tab only cycles between available sections."""
         # Make one CLI unavailable
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: False
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: False
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items",
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items",
             lambda *a, **k: [],
         )
 
@@ -507,7 +507,7 @@ class TestSectionWidgetNavigation:
         """Test that get_selected_url returns the correct URL."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         # Create a section with data
         section = MergeRequestSection()
@@ -552,7 +552,7 @@ class TestSectionWidgetNavigation:
         """Test that select_next moves cursor down."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         section = MergeRequestSection()
 
@@ -589,7 +589,7 @@ class TestSectionWidgetNavigation:
         """Test that select_previous moves cursor up."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         section = MergeRequestSection()
 
@@ -624,7 +624,7 @@ class TestSectionWidgetNavigation:
         """Test that focus_table focuses the internal DataTable."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         section = MergeRequestSection()
 
@@ -659,7 +659,7 @@ class TestBrowserIntegration:
         """Test that browser open failure is handled gracefully."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         test_mr = MergeRequest(
             iid=42,
@@ -677,13 +677,13 @@ class TestBrowserIntegration:
             return [test_mr]
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         # Mock webbrowser.open to raise an exception
@@ -764,13 +764,13 @@ class TestNavigationEdgeCases:
             return []
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", slow_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", slow_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:
@@ -791,14 +791,14 @@ class TestNavigationEdgeCases:
     async def test_navigation_with_error_section(self, app, monkeypatch):
         """Test navigation works when a section has error."""
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs",
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs",
             lambda *a, **k: (_ for _ in ()).throw(Exception("Network error")),
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:

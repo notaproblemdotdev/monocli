@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 import pytest
 
-from monocli.exceptions import CLIAuthError
-from monocli.exceptions import CLINotFoundError
-from monocli.models import MergeRequest
-from monocli.sources.gitlab._cli import GitLabAdapter
+from monocle.exceptions import CLIAuthError
+from monocle.exceptions import CLINotFoundError
+from monocle.models import MergeRequest
+from monocle.sources.gitlab._cli import GitLabAdapter
 
 
 class TestGitLabAdapter:

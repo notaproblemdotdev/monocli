@@ -1,7 +1,7 @@
-# Monocli
+# Monocle
 
 <p align="center">
-  <img src=".assets/logo.png" alt="Monocli Logo" width="200">
+  <img src=".assets/logo.png" alt="Monocle Logo" width="200">
 </p>
 
 A unified terminal dashboard for managing pull/merge requests from GitLab and work items from Jira. Built with an extensible architecture to support additional platforms.
@@ -16,13 +16,13 @@ A unified terminal dashboard for managing pull/merge requests from GitLab and wo
 ## Installation
 
 ```bash
-pip install monocli
+pip install monocle
 ```
 
 Or with uv:
 
 ```bash
-uv pip install monocli
+uv pip install monocle
 ```
 
 ## Usage
@@ -30,21 +30,21 @@ uv pip install monocli
 Run the dashboard:
 
 ```bash
-monocli
+monocle
 ```
 
 Or:
 
 ```bash
-python -m monocli
+python -m monocle
 ```
 
 Or with uvx:
 
 ```bash
-uvx monocli
+uvx monocle
 # or
-uvx https://github.com/notaproblemdotdev/monocli
+uvx https://github.com/notaproblemdotdev/monocle
 ```
 
 ## Configuration
@@ -54,7 +54,7 @@ The app requires the following CLIs to be installed and authenticated:
 - `glab` - GitLab CLI
 - `acli` - Atlassian CLI (for Jira)
 
-Configure your GitLab group and Jira settings in `~/.config/monocli/config.yaml`:
+Configure your GitLab group and Jira settings in `~/.config/monocle/config.yaml`:
 
 ```yaml
 gitlab:
@@ -67,8 +67,8 @@ jira:
 Alternatively, use environment variables:
 
 ```bash
-export MONOCLI_GITLAB_GROUP="your-group-name"
-export MONOCLI_JIRA_BASE_URL="https://your-company.atlassian.net"
+export MONOCLE_GITLAB_GROUP="your-group-name"
+export MONOCLE_JIRA_BASE_URL="https://your-company.atlassian.net"
 ```
 
 ## Development

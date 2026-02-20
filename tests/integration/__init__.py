@@ -1,4 +1,4 @@
-"""Integration tests for monocli.
+"""Integration tests for monocle.
 
 These tests verify the full data flow from sources → WorkStore → UI
 using mocked databases and data sources.

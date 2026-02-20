@@ -9,13 +9,13 @@ import pytest
 from textual.app import App
 from textual.app import ComposeResult
 
-from monocli.models import JiraWorkItem
-from monocli.models import MergeRequest
-from monocli.ui.sections import CodeReviewSection
-from monocli.ui.sections import CodeReviewSubSection
-from monocli.ui.sections import MergeRequestSection
-from monocli.ui.sections import SectionState
-from monocli.ui.sections import WorkItemSection
+from monocle.models import JiraWorkItem
+from monocle.models import MergeRequest
+from monocle.ui.sections import CodeReviewSection
+from monocle.ui.sections import CodeReviewSubSection
+from monocle.ui.sections import MergeRequestSection
+from monocle.ui.sections import SectionState
+from monocle.ui.sections import WorkItemSection
 
 
 class TestApp(App[None]):

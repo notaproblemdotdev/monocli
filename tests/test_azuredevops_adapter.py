@@ -10,9 +10,9 @@ from unittest.mock import patch
 
 import pytest
 
-from monocli.models import AzureDevOpsPieceOfWork
-from monocli.models import AzureDevOpsPullRequest
-from monocli.sources.azuredevops._api import AzureDevOpsAPIAdapter
+from monocle.models import AzureDevOpsPieceOfWork
+from monocle.models import AzureDevOpsPullRequest
+from monocle.sources.azuredevops._api import AzureDevOpsAPIAdapter
 
 
 class TestAzureDevOpsAPIAdapter:

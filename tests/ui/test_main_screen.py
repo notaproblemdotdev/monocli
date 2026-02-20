@@ -6,7 +6,7 @@ data updates, and error handling using Textual's Pilot.
 
 import pytest
 
-from monocli.ui.app import MonoApp
+from monocle.ui.app import MonoApp
 
 
 class TestMainScreen:
@@ -61,15 +61,15 @@ class TestMainScreen:
 
         # Patch the adapters
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             # Wait for screen and workers to start
@@ -103,7 +103,7 @@ class TestMainScreen:
         """Test that MR section updates when data is fetched."""
         from datetime import datetime
 
-        from monocli.models import MergeRequest
+        from monocle.models import MergeRequest
 
         # Create test MR data
         test_mr = MergeRequest(
@@ -122,13 +122,13 @@ class TestMainScreen:
             return [test_mr]
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:
@@ -146,7 +146,7 @@ class TestMainScreen:
     @pytest.mark.asyncio
     async def test_work_section_updates_with_data(self, app, monkeypatch):
         """Test that Work section updates when data is fetched."""
-        from monocli.models import JiraWorkItem
+        from monocle.models import JiraWorkItem
 
         # Create test work item
         test_item = JiraWorkItem(
@@ -165,10 +165,10 @@ class TestMainScreen:
             return [test_item]
 
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             # Wait for data to load
@@ -183,10 +183,10 @@ class TestMainScreen:
         """Test that sections handle unavailable CLI gracefully."""
         # Mock adapters as unavailable
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: False
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: False
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: False
+            "monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: False
         )
 
         async with app.run_test() as pilot:
@@ -206,13 +206,13 @@ class TestMainScreen:
         """Test that sections handle auth errors gracefully."""
         # Mock adapters as available but not authenticated
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: False
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: False
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: False)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: False)
 
         async with app.run_test() as pilot:
             # Wait for error state
@@ -234,19 +234,19 @@ class TestMainScreen:
             return []
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             screen = pilot.app.screen
@@ -290,19 +290,19 @@ class TestMainScreen:
             return []
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_mrs
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch_work
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch_work
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             # Wait for workers to start
@@ -333,19 +333,19 @@ class TestMainScreenDataHandling:
             return []
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
+            "monocle.sources.jira._cli.JiraAdapter.fetch_assigned_items", mock_fetch
         )
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
-        monkeypatch.setattr("monocli.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.check_auth", lambda self: True)
+        monkeypatch.setattr("monocle.sources.jira._cli.JiraAdapter.is_available", lambda self: True)
 
         async with app.run_test() as pilot:
             await pilot.pause()
@@ -366,13 +366,13 @@ class TestMainScreenDataHandling:
             raise Exception("Network error")
 
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_error
+            "monocle.sources.gitlab._cli.GitLabAdapter.fetch_assigned_mrs", mock_fetch_error
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.check_auth", lambda self: True
         )
         monkeypatch.setattr(
-            "monocli.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
+            "monocle.sources.gitlab._cli.GitLabAdapter.is_available", lambda self: True
         )
 
         async with app.run_test() as pilot:

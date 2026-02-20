@@ -13,15 +13,15 @@ from typing import cast
 
 import pytest
 
-from monocli.models import CodeReview
-from monocli.models import JiraPieceOfWork
-from monocli.models import TodoistPieceOfWork
-from monocli.ui.main_screen import MainScreen
-from monocli.ui.sections import SectionState
+from monocle.models import CodeReview
+from monocle.models import JiraPieceOfWork
+from monocle.models import TodoistPieceOfWork
+from monocle.ui.main_screen import MainScreen
+from monocle.ui.sections import SectionState
 
 if TYPE_CHECKING:
-    from monocli.db.work_store import WorkStore
-    from monocli.ui.app import MonoApp
+    from monocle.db.work_store import WorkStore
+    from monocle.ui.app import MonoApp
 
 
 # Sample data for tests

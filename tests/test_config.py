@@ -12,10 +12,10 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from monocli.config import Config
-from monocli.config import ConfigError
-from monocli.config import get_config
-from monocli.config import validate_keyring_available
+from monocle.config import Config
+from monocle.config import ConfigError
+from monocle.config import get_config
+from monocle.config import validate_keyring_available
 
 
 class TestConfigLoad:
@@ -40,12 +40,12 @@ class TestConfigLoad:
 
     def test_load_from_default_locations(self, tmp_path: Path) -> None:
         """Test loading from default config file locations."""
-        config_file = tmp_path / ".monocli.yaml"
+        config_file = tmp_path / ".monocle.yaml"
         config_data = {"gitlab": {"group": "default-group"}}
         config_file.write_text(yaml.dump(config_data))
 
         # Temporarily override CONFIG_PATHS
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             config = Config.load()
             assert config.gitlab_group == "default-group"
 
@@ -54,14 +54,14 @@ class TestConfigEnvironmentVariables:
     """Tests for environment variable overrides."""
 
     def test_gitlab_group_from_env(self) -> None:
-        """Test MONOCLI_GITLAB_GROUP env var overrides config file."""
-        with patch.dict(os.environ, {"MONOCLI_GITLAB_GROUP": "env-group"}):
+        """Test MONOCLE_GITLAB_GROUP env var overrides config file."""
+        with patch.dict(os.environ, {"MONOCLE_GITLAB_GROUP": "env-group"}):
             config = Config.load()
             assert config.gitlab_group == "env-group"
 
     def test_jira_project_from_env(self) -> None:
-        """Test MONOCLI_JIRA_PROJECT env var overrides config file."""
-        with patch.dict(os.environ, {"MONOCLI_JIRA_PROJECT": "ENVPROJ"}):
+        """Test MONOCLE_JIRA_PROJECT env var overrides config file."""
+        with patch.dict(os.environ, {"MONOCLE_JIRA_PROJECT": "ENVPROJ"}):
             config = Config.load()
             assert config.jira_project == "ENVPROJ"
 
@@ -71,7 +71,7 @@ class TestConfigEnvironmentVariables:
         config_data = {"gitlab": {"group": "file-group"}}
         config_file.write_text(yaml.dump(config_data))
 
-        with patch.dict(os.environ, {"MONOCLI_GITLAB_GROUP": "env-group"}):
+        with patch.dict(os.environ, {"MONOCLE_GITLAB_GROUP": "env-group"}):
             config = Config.load(config_file)
             assert config.gitlab_group == "env-group"
 
@@ -108,7 +108,7 @@ class TestConfigRequireGitlabGroup:
             config.require_gitlab_group()
 
         assert "GitLab group not configured" in str(exc_info.value)
-        assert "MONOCLI_GITLAB_GROUP" in str(exc_info.value)
+        assert "MONOCLE_GITLAB_GROUP" in str(exc_info.value)
         assert "config.yaml" in str(exc_info.value)
 
     def test_require_gitlab_group_raises_with_empty_string(self, tmp_path: Path) -> None:
@@ -153,17 +153,17 @@ class TestConfigFileErrors:
 class TestConfigKeyringIntegration:
     """Tests for keyring token storage integration."""
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_todoist_token_env_var_priority(self, mock_keyring: MagicMock) -> None:
         """Test environment variable takes priority over keyring and config."""
-        with patch.dict(os.environ, {"MONOCLI_TODOIST_TOKEN": "env-token"}):
+        with patch.dict(os.environ, {"MONOCLE_TODOIST_TOKEN": "env-token"}):
             config = Config.load()
             assert config.todoist_token == "env-token"
             # Keyring should not be accessed
             mock_keyring.get_token.assert_not_called()
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_todoist_token_from_keyring(self, mock_keyring: MagicMock) -> None:
         """Test keyring token used when no env var."""
@@ -173,7 +173,7 @@ class TestConfigKeyringIntegration:
         assert config.todoist_token == "keyring-token"
         mock_keyring.get_token.assert_called_once_with("todoist")
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_todoist_token_migration_from_config(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -189,7 +189,7 @@ class TestConfigKeyringIntegration:
         config_file.write_text(yaml.dump(config_data))
 
         # Temporarily override CONFIG_PATHS
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             config = Config.load()
             # Access the token (triggers migration)
             token = config.todoist_token
@@ -201,7 +201,7 @@ class TestConfigKeyringIntegration:
             # Verify token was removed from in-memory model
             assert config._model.todoist.token is None
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_todoist_token_no_token_returns_none(self, mock_keyring: MagicMock) -> None:
         """Test None returned when no token anywhere."""
@@ -210,7 +210,7 @@ class TestConfigKeyringIntegration:
         config = Config.load()
         assert config.todoist_token is None
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_migration_keyring_failure_raises_error(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -223,14 +223,14 @@ class TestConfigKeyringIntegration:
         config_data = {"todoist": {"token": "config-token"}}
         config_file.write_text(yaml.dump(config_data))
 
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             config = Config.load()
             with pytest.raises(ConfigError) as exc_info:
                 _ = config.todoist_token
 
             assert "Failed to store token in system keyring" in str(exc_info.value)
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_migration_keyring_unavailable_raises_error(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -243,7 +243,7 @@ class TestConfigKeyringIntegration:
         config_data = {"todoist": {"token": "config-token"}}
         config_file.write_text(yaml.dump(config_data))
 
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             config = Config.load()
             with pytest.raises(ConfigError) as exc_info:
                 _ = config.todoist_token
@@ -254,16 +254,16 @@ class TestConfigKeyringIntegration:
 class TestValidateKeyringAvailable:
     """Tests for validate_keyring_available function."""
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_validation_skipped_with_env_var(self, mock_keyring: MagicMock) -> None:
         """Test validation skipped when env var is set."""
-        with patch.dict(os.environ, {"MONOCLI_TODOIST_TOKEN": "env-token"}):
+        with patch.dict(os.environ, {"MONOCLE_TODOIST_TOKEN": "env-token"}):
             # Should not raise
             validate_keyring_available()
             mock_keyring.is_available.assert_not_called()
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_validation_skipped_no_token_configured(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -272,12 +272,12 @@ class TestValidateKeyringAvailable:
         # Ensure get_token returns None (not a truthy MagicMock)
         mock_keyring.get_token.return_value = None
         # Point to non-existent config file to ensure no token configured
-        with patch("monocli.config.CONFIG_PATHS", [tmp_path / "nonexistent.yaml"]):
+        with patch("monocle.config.CONFIG_PATHS", [tmp_path / "nonexistent.yaml"]):
             # Should not raise, no keyring check needed
             validate_keyring_available()
             mock_keyring.is_available.assert_not_called()
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_validation_passes_with_keyring_available(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -290,12 +290,12 @@ class TestValidateKeyringAvailable:
         config_data = {"todoist": {"token": "config-token"}}
         config_file.write_text(yaml.dump(config_data))
 
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             # Should not raise
             validate_keyring_available()
             mock_keyring.is_available.assert_called_once()
 
-    @patch("monocli.config.keyring_utils")
+    @patch("monocle.config.keyring_utils")
     @patch.dict(os.environ, {}, clear=True)
     def test_validation_fails_without_keyring(
         self, mock_keyring: MagicMock, tmp_path: Path
@@ -308,12 +308,12 @@ class TestValidateKeyringAvailable:
         config_data = {"todoist": {"token": "config-token"}}
         config_file.write_text(yaml.dump(config_data))
 
-        with patch("monocli.config.CONFIG_PATHS", [config_file]):
+        with patch("monocle.config.CONFIG_PATHS", [config_file]):
             with pytest.raises(ConfigError) as exc_info:
                 validate_keyring_available()
 
             assert "System keyring is not available" in str(exc_info.value)
-            assert "monocli requires secure credential storage" in str(exc_info.value)
+            assert "monocle requires secure credential storage" in str(exc_info.value)
 
 
 class TestConfigShowLogsCommand:

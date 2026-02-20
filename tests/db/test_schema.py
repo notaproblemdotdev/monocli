@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from monocli.db.connection import DatabaseManager
-from monocli.db.schema import SCHEMA_VERSION
+from monocle.db.connection import DatabaseManager
+from monocle.db.schema import SCHEMA_VERSION
 
 
 @pytest.fixture(autouse=True)

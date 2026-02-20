@@ -11,15 +11,15 @@ from typing import cast
 
 import pytest
 
-from monocli.db.connection import DatabaseManager
-from monocli.db.work_store import WorkStore
-from monocli.exceptions import CLIAuthError
-from monocli.models import CodeReview
-from monocli.models import TodoistPieceOfWork
-from monocli.sources.registry import SourceRegistry
-from monocli.ui.app import MonoApp
-from monocli.ui.main_screen import MainScreen
-from monocli.ui.sections import SectionState
+from monocle.db.connection import DatabaseManager
+from monocle.db.work_store import WorkStore
+from monocle.exceptions import CLIAuthError
+from monocle.models import CodeReview
+from monocle.models import TodoistPieceOfWork
+from monocle.sources.registry import SourceRegistry
+from monocle.ui.app import MonoApp
+from monocle.ui.main_screen import MainScreen
+from monocle.ui.sections import SectionState
 from tests.integration.conftest import MockGitLabSource
 from tests.integration.conftest import MockJiraSource
 from tests.integration.conftest import MockTodoistSource
@@ -273,7 +273,7 @@ class TestAuthFailureScenarios:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 

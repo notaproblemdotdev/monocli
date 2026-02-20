@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import pytest
 
-from monocli.db.connection import DatabaseManager
-from monocli.db.work_store import WorkStore
-from monocli.models import CodeReview
-from monocli.models import JiraPieceOfWork
-from monocli.models import TodoistPieceOfWork
-from monocli.sources.registry import SourceRegistry
-from monocli.ui.app import MonoApp
+from monocle.db.connection import DatabaseManager
+from monocle.db.work_store import WorkStore
+from monocle.models import CodeReview
+from monocle.models import JiraPieceOfWork
+from monocle.models import TodoistPieceOfWork
+from monocle.sources.registry import SourceRegistry
+from monocle.ui.app import MonoApp
 from tests.integration.conftest import MockGitLabSource
 from tests.integration.conftest import MockJiraSource
 
@@ -74,7 +74,7 @@ async def test_code_review_section_populated(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -130,7 +130,7 @@ async def test_piece_of_work_section_populated(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -176,7 +176,7 @@ async def test_empty_state_visual(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -222,7 +222,7 @@ async def test_error_state_visual(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -335,7 +335,7 @@ async def test_full_dashboard_view(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -381,7 +381,7 @@ async def test_loading_state_visual(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 
@@ -437,7 +437,7 @@ async def test_work_section_active_state(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 

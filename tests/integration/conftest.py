@@ -18,15 +18,15 @@ from unittest.mock import patch
 
 import pytest
 
-from monocli.db.connection import DatabaseManager
-from monocli.db.work_store import WorkStore
-from monocli.models import CodeReview
-from monocli.models import JiraPieceOfWork
-from monocli.models import TodoistPieceOfWork
-from monocli.sources.base import CodeReviewSource
-from monocli.sources.base import PieceOfWorkSource
-from monocli.sources.registry import SourceRegistry
-from monocli.ui.app import MonoApp
+from monocle.db.connection import DatabaseManager
+from monocle.db.work_store import WorkStore
+from monocle.models import CodeReview
+from monocle.models import JiraPieceOfWork
+from monocle.models import TodoistPieceOfWork
+from monocle.sources.base import CodeReviewSource
+from monocle.sources.base import PieceOfWorkSource
+from monocle.sources.registry import SourceRegistry
+from monocle.ui.app import MonoApp
 
 
 @pytest.fixture
@@ -363,7 +363,7 @@ async def app_with_mocked_store(
         return store
 
     monkeypatch.setattr(
-        "monocli.ui.work_store_factory.create_work_store",
+        "monocle.ui.work_store_factory.create_work_store",
         mock_create_store,
     )
 

@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from monocli.db.connection import DatabaseManager
-from monocli.db.work_store import WorkStore
-from monocli.models import CodeReview
-from monocli.sources.registry import SourceRegistry
-from monocli.ui.app import MonoApp
-from monocli.ui.sections import SectionState
+from monocle.db.connection import DatabaseManager
+from monocle.db.work_store import WorkStore
+from monocle.models import CodeReview
+from monocle.sources.registry import SourceRegistry
+from monocle.ui.app import MonoApp
+from monocle.ui.sections import SectionState
 from tests.integration.conftest import MockGitLabSource
 from tests.integration.conftest import MockJiraSource
 
@@ -74,7 +74,7 @@ class TestLoadingStateTransitions:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -131,7 +131,7 @@ class TestLoadingStateTransitions:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -188,7 +188,7 @@ class TestEmptyStateDisplay:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -236,7 +236,7 @@ class TestEmptyStateDisplay:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -291,7 +291,7 @@ class TestErrorStateDisplay:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -359,7 +359,7 @@ class TestErrorStateDisplay:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -434,7 +434,7 @@ class TestRefreshUpdatesData:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
@@ -512,7 +512,7 @@ class TestRefreshUpdatesData:
             return store
 
         monkeypatch.setattr(
-            "monocli.ui.work_store_factory.create_work_store",
+            "monocle.ui.work_store_factory.create_work_store",
             mock_create_store,
         )
 
