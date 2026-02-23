@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from unittest.mock import Mock
+
 import pytest
 
+from monocle.config import Config
+from monocle.ui.app import MonoApp
 from monocle.ui.main_screen import MainScreen
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 pytestmark = pytest.mark.asyncio
 
@@ -31,6 +39,60 @@ async def test_system_commands_include_expected_entries(app_with_stub_store) -> 
         command_titles = {command.title for command in pilot.app.get_system_commands(screen)}
 
         assert "Setup" in command_titles
+        assert "Open Config File" in command_titles
         assert "Quit" in command_titles
         assert "Keys" in command_titles
         assert "Screenshot" in command_titles
+
+
+async def test_open_config_file_uses_existing_config_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    app_config_path = tmp_path / "existing-config.yaml"
+    app_config_path.write_text("gitlab:\n  group: test\n")
+
+    app = MonoApp()
+
+    mock_config = Mock(spec=Config)
+    mock_config.get_config_path.return_value = app_config_path
+    monkeypatch.setattr("monocle.ui.app.get_config", lambda: mock_config)
+    monkeypatch.setattr("monocle.ui.app.shutil.which", lambda _: "/usr/bin/open")
+
+    open_calls: list[list[str]] = []
+
+    def mock_run(cmd: list[str], **kwargs: object) -> None:
+        open_calls.append(cmd)
+
+    monkeypatch.setattr("monocle.ui.app.subprocess.run", mock_run)
+    monkeypatch.setattr("sys.platform", "darwin")
+
+    app.action_open_config_file()
+
+    assert open_calls == [["/usr/bin/open", str(app_config_path)]]
+
+
+async def test_open_config_file_creates_default_path_when_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    default_config_path = tmp_path / "config" / "monocle.yaml"
+
+    app = MonoApp()
+
+    mock_config = Mock(spec=Config)
+    mock_config.get_config_path.return_value = None
+    monkeypatch.setattr("monocle.ui.app.get_config", lambda: mock_config)
+    monkeypatch.setattr("monocle.ui.app.CONFIG_PATHS", [default_config_path])
+    monkeypatch.setattr("monocle.ui.app.shutil.which", lambda _: "/usr/bin/open")
+
+    open_calls: list[list[str]] = []
+
+    def mock_run(cmd: list[str], **kwargs: object) -> None:
+        open_calls.append(cmd)
+
+    monkeypatch.setattr("monocle.ui.app.subprocess.run", mock_run)
+    monkeypatch.setattr("sys.platform", "darwin")
+
+    app.action_open_config_file()
+
+    assert default_config_path.exists()
+    assert open_calls == [["/usr/bin/open", str(default_config_path)]]
