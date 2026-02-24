@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any
+from typing import Literal
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -109,7 +110,7 @@ class IntegrationAdapters(BaseModel):
 
     cli: dict[str, Any] = Field(default_factory=dict)
     api: dict[str, Any] = Field(default_factory=dict)
-    selected: str | None = None
+    selected: Literal["cli", "api"] | None = None
 
 
 class AdaptersConfig(BaseModel):
@@ -127,7 +128,7 @@ class AdaptersConfig(BaseModel):
 class AppConfig(BaseModel):
     """Root application configuration."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     gitlab: GitLabConfig = Field(default_factory=GitLabConfig)
     jira: JiraConfig = Field(default_factory=JiraConfig)

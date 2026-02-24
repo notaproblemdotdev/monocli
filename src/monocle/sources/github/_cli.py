@@ -55,11 +55,7 @@ class GitHubAdapter(CLIAdapter):
             "--json",
             "number,title,state,author,url,createdAt,headRefName",
         ]
-        try:
-            return await self.fetch_json(args)
-        except Exception as e:
-            logger.warning("Failed to fetch assigned GitHub PRs", error=str(e))
-            return []
+        return await self.fetch_json(args)
 
     async def fetch_authored_prs(self) -> list[dict]:
         """Fetch PRs authored by current user.
@@ -78,11 +74,7 @@ class GitHubAdapter(CLIAdapter):
             "--json",
             "number,title,state,author,url,createdAt,headRefName",
         ]
-        try:
-            return await self.fetch_json(args)
-        except Exception as e:
-            logger.warning("Failed to fetch authored GitHub PRs", error=str(e))
-            return []
+        return await self.fetch_json(args)
 
     async def fetch_pending_review_prs(self) -> list[dict]:
         """Fetch PRs where current user is requested to review.
@@ -100,11 +92,7 @@ class GitHubAdapter(CLIAdapter):
             "--json",
             "number,title,state,author,url,createdAt,headRefName",
         ]
-        try:
-            return await self.fetch_json(args)
-        except Exception as e:
-            logger.warning("Failed to fetch pending review GitHub PRs", error=str(e))
-            return []
+        return await self.fetch_json(args)
 
     async def fetch_assigned_issues(self) -> list[dict]:
         """Fetch issues assigned to current user.
@@ -123,11 +111,7 @@ class GitHubAdapter(CLIAdapter):
             "--json",
             "number,title,state,author,url,createdAt,labels,assignees",
         ]
-        try:
-            return await self.fetch_json(args)
-        except Exception as e:
-            logger.warning("Failed to fetch GitHub issues", error=str(e))
-            return []
+        return await self.fetch_json(args)
 
     async def check_auth(self) -> bool:
         """Check if gh is authenticated.

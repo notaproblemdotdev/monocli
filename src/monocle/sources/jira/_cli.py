@@ -33,14 +33,14 @@ class JiraAdapter(CLIAdapter):
         is_authenticated = await adapter.check_auth()
     """
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str | None = None) -> None:
         """Initialize Jira adapter with base URL.
 
         Args:
-            base_url: Jira base URL (e.g., "https://company.atlassian.net")
+            base_url: Optional Jira base URL (e.g., "https://company.atlassian.net")
         """
         super().__init__("acli")
-        self.base_url = base_url.rstrip("/")
+        self.base_url = base_url.rstrip("/") if base_url else None
 
     async def fetch_assigned_items(
         self,
@@ -80,13 +80,14 @@ class JiraAdapter(CLIAdapter):
             "--jql",
             "assignee = currentUser() AND statusCategory != Done",
             "--fields",
-            "issuetype,key,assignee,priority,status,summary,created,updated,duedate",
+            "issuetype,key,assignee,priority,status,summary",
             "--json",
         ]
         try:
             items = await self.fetch_and_parse(args, JiraWorkItem)
-            for item in items:
-                item.base_url = self.base_url
+            if self.base_url:
+                for item in items:
+                    item.base_url = self.base_url
             logger.info("Fetched Jira work items", count=len(items))
             return items
         except (CLIAuthError, CLINotFoundError):

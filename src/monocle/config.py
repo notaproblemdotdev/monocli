@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import ValidationError
 
 from monocle import get_logger
 from monocle import keyring_utils
@@ -45,6 +46,7 @@ class Config:
 
     Environment variables:
         MONOCLE_GITLAB_GROUP: Default GitLab group to fetch MRs from
+        MONOCLE_GITLAB_PROJECT: Alias for GitLab group/scope
         MONOCLE_JIRA_PROJECT: Default Jira project to fetch issues from
         MONOCLE_TODOIST_TOKEN: Todoist API token
 
@@ -96,8 +98,31 @@ class Config:
 
         data = cls._apply_env_vars(data)
 
-        model = AppConfig.from_dict(data)
+        model = cls._validate_model(data)
         return cls(model)
+
+    @staticmethod
+    def _validate_model(data: dict[str, Any]) -> AppConfig:
+        """Validate raw config data with Pydantic schema.
+
+        Args:
+            data: Raw configuration dictionary.
+
+        Returns:
+            Validated AppConfig model.
+
+        Raises:
+            ConfigError: If validation fails.
+        """
+        try:
+            return AppConfig.from_dict(data)
+        except ValidationError as e:
+            messages = []
+            for error in e.errors():
+                location = ".".join(str(part) for part in error["loc"])
+                messages.append(f"- {location}: {error['msg']}")
+            details = "\n".join(messages)
+            raise ConfigError(f"Invalid config format:\n{details}") from e
 
     @classmethod
     def _load_file(cls, path: Path) -> dict[str, Any]:
@@ -140,6 +165,9 @@ class Config:
         gitlab_group = os.getenv("MONOCLE_GITLAB_GROUP")
         if gitlab_group:
             data["gitlab"]["group"] = gitlab_group
+        gitlab_project = os.getenv("MONOCLE_GITLAB_PROJECT")
+        if gitlab_project and "group" not in data["gitlab"]:
+            data["gitlab"]["group"] = gitlab_project
 
         # Jira settings
         jira_project = os.getenv("MONOCLE_JIRA_PROJECT")
@@ -178,8 +206,23 @@ class Config:
 
     @property
     def gitlab_group(self) -> str | None:
-        """Get the configured GitLab group."""
-        return self._model.gitlab.group
+        """Get the configured GitLab scope/group.
+
+        Resolution order:
+        1. Top-level config: gitlab.group
+        2. Adapter config: adapters.gitlab.cli.group
+        3. Adapter config aliases: adapters.gitlab.cli.project / project_key
+        """
+        if self._model.gitlab.group:
+            return self._model.gitlab.group
+
+        adapter_cli = self.get_adapter_config("gitlab", "cli")
+        for key in ("group", "project", "project_key"):
+            value = adapter_cli.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+        return None
 
     @property
     def jira_project(self) -> str | None:
@@ -197,8 +240,9 @@ class Config:
 
         Checks in priority order:
         1. Environment variable MONOCLE_TODOIST_TOKEN (highest priority)
-        2. System keyring (secure storage)
-        3. Config file (legacy, auto-migrates to keyring)
+        2. Environment variable TODOIST_API_TOKEN or TODOIST_TOKEN
+        3. System keyring (secure storage)
+        4. Config file (legacy, auto-migrates to keyring)
 
         Returns:
             Todoist API token or None if not configured.
@@ -206,6 +250,10 @@ class Config:
         env_token = os.getenv("MONOCLE_TODOIST_TOKEN")
         if env_token:
             return env_token
+
+        legacy_env_token = os.getenv("TODOIST_API_TOKEN") or os.getenv("TODOIST_TOKEN")
+        if legacy_env_token:
+            return legacy_env_token
 
         keyring_token = keyring_utils.get_token("todoist")
         if keyring_token:
@@ -356,6 +404,12 @@ class Config:
         Returns:
             True if successful, False otherwise
         """
+        try:
+            model = self._validate_model(data)
+        except ConfigError as e:
+            logger.error("Refusing to write invalid config", error=str(e))
+            return False
+
         config_path = self._ensure_config_dir()
 
         try:
@@ -368,7 +422,7 @@ class Config:
                 with os.fdopen(temp_fd, "w") as f:
                     yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
                 os.replace(temp_path, config_path)
-                self._model = AppConfig.from_dict(data)
+                self._model = model
                 return True
             except Exception:
                 if os.path.exists(temp_path):

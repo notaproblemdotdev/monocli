@@ -140,12 +140,8 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource, SetupCapableSource):
             List of CodeReview items (PRs) assigned to the user.
         """
         logger.info("Fetching assigned GitHub PRs")
-        try:
-            data = await self._adapter.fetch_assigned_prs()
-            return [self._convert_pr_to_code_review(pr) for pr in data]
-        except Exception as e:
-            logger.warning("Failed to fetch assigned GitHub PRs", error=str(e))
-            return []
+        data = await self._adapter.fetch_assigned_prs()
+        return [self._convert_pr_to_code_review(pr) for pr in data]
 
     async def fetch_authored(self) -> list[CodeReview]:
         """Fetch PRs authored by the current user.
@@ -154,12 +150,8 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource, SetupCapableSource):
             List of CodeReview items (PRs) authored by the user.
         """
         logger.info("Fetching authored GitHub PRs")
-        try:
-            data = await self._adapter.fetch_authored_prs()
-            return [self._convert_pr_to_code_review(pr) for pr in data]
-        except Exception as e:
-            logger.warning("Failed to fetch authored GitHub PRs", error=str(e))
-            return []
+        data = await self._adapter.fetch_authored_prs()
+        return [self._convert_pr_to_code_review(pr) for pr in data]
 
     async def fetch_pending_review(self) -> list[CodeReview]:
         """Fetch PRs where the current user is requested to review.
@@ -168,12 +160,8 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource, SetupCapableSource):
             List of CodeReview items (PRs) pending user's review.
         """
         logger.info("Fetching pending review GitHub PRs")
-        try:
-            data = await self._adapter.fetch_pending_review_prs()
-            return [self._convert_pr_to_code_review(pr) for pr in data]
-        except Exception as e:
-            logger.warning("Failed to fetch pending review GitHub PRs", error=str(e))
-            return []
+        data = await self._adapter.fetch_pending_review_prs()
+        return [self._convert_pr_to_code_review(pr) for pr in data]
 
     async def fetch_items(self) -> list[PieceOfWork]:
         """Fetch issues assigned to the current user.
@@ -182,12 +170,8 @@ class GitHubSource(CodeReviewSource, PieceOfWorkSource, SetupCapableSource):
             List of PieceOfWork items (issues) assigned to the user.
         """
         logger.info("Fetching assigned GitHub issues")
-        try:
-            data = await self._adapter.fetch_assigned_issues()
-            return [self._convert_issue_to_piece_of_work(issue) for issue in data]
-        except Exception as e:
-            logger.warning("Failed to fetch GitHub issues", error=str(e))
-            return []
+        data = await self._adapter.fetch_assigned_issues()
+        return [self._convert_issue_to_piece_of_work(issue) for issue in data]
 
     def _convert_pr_to_code_review(self, pr: dict) -> CodeReview:
         """Convert a GitHub PR dict to a CodeReview model."""

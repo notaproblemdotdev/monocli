@@ -61,22 +61,20 @@ def _register_code_review_sources(registry: SourceRegistry, config: Config) -> N
 
 def _register_work_sources(registry: SourceRegistry, config: Config) -> None:
     """Register all configured work item sources."""
+    _register_github_work_items(registry)
     _register_jira(registry, config)
     _register_todoist(registry, config)
 
 
 def _register_gitlab(registry: SourceRegistry, config: Config) -> None:
-    """Register GitLab source if configured."""
-    from monocle.config import ConfigError
+    """Register GitLab source."""
     from monocle.sources import GitLabSource
 
     try:
-        group = config.require_gitlab_group()
+        group = config.gitlab_group
         gitlab_source = GitLabSource(group=group)
         registry.register_code_review_source(gitlab_source)
         logger.debug("Registered GitLab source")
-    except ConfigError:
-        logger.debug("GitLab not configured, skipping")
     except Exception as e:
         logger.warning("Failed to initialize GitLab source", error=str(e))
 
@@ -93,18 +91,27 @@ def _register_github(registry: SourceRegistry) -> None:
         logger.warning("Failed to initialize GitHub source", error=str(e))
 
 
+def _register_github_work_items(registry: SourceRegistry) -> None:
+    """Register GitHub source for work items (issues)."""
+    from monocle.sources import GitHubSource
+
+    try:
+        github_source = GitHubSource()
+        registry.register_piece_of_work_source(github_source)
+        logger.debug("Registered GitHub work source")
+    except Exception as e:
+        logger.warning("Failed to initialize GitHub work source", error=str(e))
+
+
 def _register_jira(registry: SourceRegistry, config: Config) -> None:
-    """Register Jira source if configured."""
-    from monocle.config import ConfigError
+    """Register Jira source."""
     from monocle.sources import JiraSource
 
     try:
-        base_url = config.require_jira_base_url()
+        base_url = config.jira_base_url
         jira_source = JiraSource(base_url=base_url)
         registry.register_piece_of_work_source(jira_source)
         logger.debug("Registered Jira source")
-    except ConfigError:
-        logger.debug("Jira not configured, skipping")
     except Exception as e:
         logger.warning("Failed to initialize Jira source", error=str(e))
 

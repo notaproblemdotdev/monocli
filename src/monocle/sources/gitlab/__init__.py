@@ -41,11 +41,11 @@ class GitLabSource(CodeReviewSource, SetupCapableSource):
                 print(f"{mr.display_key()}: {mr.title}")
     """
 
-    def __init__(self, group: str) -> None:
+    def __init__(self, group: str | None = None) -> None:
         """Initialize the GitLab code review source.
 
         Args:
-            group: GitLab group to search (e.g., "my-group")
+            group: Optional GitLab group to search (e.g., "my-group")
         """
         self.group = group
         self._adapter = GitLabAdapter()

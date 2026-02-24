@@ -40,11 +40,11 @@ class JiraSource(PieceOfWorkSource, SetupCapableSource):
                 print(f"{item.display_key()}: {item.title}")
     """
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str | None = None) -> None:
         """Initialize the Jira piece of work source.
 
         Args:
-            base_url: Jira base URL (e.g., "https://company.atlassian.net")
+            base_url: Optional Jira base URL (e.g., "https://company.atlassian.net")
         """
         self._adapter = JiraAdapter(base_url)
 

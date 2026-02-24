@@ -297,6 +297,59 @@ class TestFetchAssignedMRs:
         assert "alice" in cmd_list
 
     @pytest.mark.asyncio
+    async def test_fetch_assigned_mrs_without_group_omits_group_flag(self) -> None:
+        """Test fetch works without configured group."""
+        adapter = GitLabAdapter()
+
+        sample_mrs = [
+            {
+                "iid": 127,
+                "title": "No-group MR fetch",
+                "state": "opened",
+                "author": {"name": "Alice", "username": "alice"},
+                "web_url": "https://gitlab.com/org/repo/-/merge_requests/127",
+                "source_branch": "feature/no-group",
+                "target_branch": "main",
+                "created_at": "2024-01-10T09:00:00Z",
+                "draft": False,
+            }
+        ]
+
+        with patch("shutil.which") as mock_which:
+            mock_which.return_value = "/usr/local/bin/glab"
+
+            with patch(
+                "asyncio.create_subprocess_exec",
+                new_callable=AsyncMock,
+            ) as mock_exec:
+                mock_proc = AsyncMock()
+                mock_proc.returncode = 0
+                mock_proc.communicate = AsyncMock(
+                    return_value=(
+                        json.dumps(sample_mrs).encode(),
+                        b"",
+                    )
+                )
+                mock_exec.return_value = mock_proc
+
+                mrs = await adapter.fetch_assigned_mrs(group=None)
+
+        assert len(mrs) == 1
+        call_args = mock_exec.call_args
+        cmd_list = call_args[0]
+        assert "--group" not in cmd_list
+
+    @pytest.mark.asyncio
+    async def test_fetch_assigned_mrs_without_group_and_without_gitlab_remote_skips(self) -> None:
+        """When no group is configured and no GitLab remote exists, skip fetch."""
+        adapter = GitLabAdapter()
+
+        with patch.object(adapter, "_has_gitlab_remote", new=AsyncMock(return_value=False)):
+            mrs = await adapter.fetch_assigned_mrs(group=None)
+
+        assert mrs == []
+
+    @pytest.mark.asyncio
     async def test_fetch_assigned_mrs_with_reviewer_filter(self) -> None:
         """Test fetch with reviewer filter for pending reviews."""
         adapter = GitLabAdapter()

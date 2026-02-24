@@ -59,6 +59,12 @@ class TestConfigEnvironmentVariables:
             config = Config.load()
             assert config.gitlab_group == "env-group"
 
+    def test_gitlab_group_from_env_project_alias(self) -> None:
+        """Test MONOCLE_GITLAB_PROJECT env var is accepted as alias."""
+        with patch.dict(os.environ, {"MONOCLE_GITLAB_PROJECT": "env-project"}):
+            config = Config.load()
+            assert config.gitlab_group == "env-project"
+
     def test_jira_project_from_env(self) -> None:
         """Test MONOCLE_JIRA_PROJECT env var overrides config file."""
         with patch.dict(os.environ, {"MONOCLE_JIRA_PROJECT": "ENVPROJ"}):
@@ -85,6 +91,26 @@ class TestConfigEnvironmentVariables:
         with patch.dict(os.environ, {}, clear=True):
             config = Config.load(config_file)
             assert config.gitlab_group == "file-group"
+
+    def test_gitlab_group_falls_back_to_adapter_cli_group(self, tmp_path: Path) -> None:
+        """Test adapters.gitlab.cli.group is used when gitlab.group is missing."""
+        config_file = tmp_path / "config.yaml"
+        config_data = {"adapters": {"gitlab": {"cli": {"group": "adapter-group"}}}}
+        config_file.write_text(yaml.dump(config_data))
+
+        with patch.dict(os.environ, {}, clear=True):
+            config = Config.load(config_file)
+            assert config.gitlab_group == "adapter-group"
+
+    def test_gitlab_group_accepts_adapter_project_key_alias(self, tmp_path: Path) -> None:
+        """Test adapters.gitlab.cli.project_key is used as alias."""
+        config_file = tmp_path / "config.yaml"
+        config_data = {"adapters": {"gitlab": {"cli": {"project_key": "adapter-project"}}}}
+        config_file.write_text(yaml.dump(config_data))
+
+        with patch.dict(os.environ, {}, clear=True):
+            config = Config.load(config_file)
+            assert config.gitlab_group == "adapter-project"
 
 
 class TestConfigRequireGitlabGroup:
@@ -149,6 +175,28 @@ class TestConfigFileErrors:
         assert config.gitlab_group is None
         assert config.jira_project is None
 
+    def test_invalid_top_level_key_raises_config_error(self, tmp_path: Path) -> None:
+        """Test unknown top-level keys are rejected by schema validation."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump({"unknown_section": {"x": 1}}))
+
+        with pytest.raises(ConfigError) as exc_info:
+            Config.load(config_file)
+
+        assert "Invalid config format" in str(exc_info.value)
+        assert "unknown_section" in str(exc_info.value)
+
+    def test_invalid_selected_adapter_value_raises_config_error(self, tmp_path: Path) -> None:
+        """Test adapters.<integration>.selected only accepts cli/api."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump({"adapters": {"gitlab": {"selected": "token"}}}))
+
+        with pytest.raises(ConfigError) as exc_info:
+            Config.load(config_file)
+
+        assert "Invalid config format" in str(exc_info.value)
+        assert "adapters.gitlab.selected" in str(exc_info.value)
+
 
 class TestConfigKeyringIntegration:
     """Tests for keyring token storage integration."""
@@ -161,6 +209,15 @@ class TestConfigKeyringIntegration:
             config = Config.load()
             assert config.todoist_token == "env-token"
             # Keyring should not be accessed
+            mock_keyring.get_token.assert_not_called()
+
+    @patch("monocle.config.keyring_utils")
+    @patch.dict(os.environ, {}, clear=True)
+    def test_todoist_token_legacy_env_var_priority(self, mock_keyring: MagicMock) -> None:
+        """Test standard Todoist env vars are supported."""
+        with patch.dict(os.environ, {"TODOIST_API_TOKEN": "legacy-env-token"}):
+            config = Config.load()
+            assert config.todoist_token == "legacy-env-token"
             mock_keyring.get_token.assert_not_called()
 
     @patch("monocle.config.keyring_utils")
@@ -342,3 +399,16 @@ class TestConfigShowLogsCommand:
 
         config = Config.load(config_file)
         assert config.show_logs_command == "bat {file}"
+
+
+class TestConfigSchemaValidationOnWrite:
+    """Tests for schema validation before writing config files."""
+
+    def test_reject_invalid_selected_adapter_without_writing(self, tmp_path: Path) -> None:
+        """set_selected_adapter should reject unsupported adapter types."""
+        config_path = tmp_path / "config.yaml"
+
+        with patch("monocle.config.CONFIG_PATHS", [config_path]):
+            config = Config.load()
+            assert config.set_selected_adapter("gitlab", "token") is False
+            assert not config_path.exists()

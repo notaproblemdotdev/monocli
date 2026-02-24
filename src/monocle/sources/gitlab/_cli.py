@@ -6,6 +6,7 @@ assigned to or authored by the current user.
 
 from monocle import get_logger
 from monocle.async_utils import CLIAdapter
+from monocle.async_utils import run_cli_command
 from monocle.exceptions import CLIAuthError
 from monocle.exceptions import CLINotFoundError
 from monocle.models import MergeRequest
@@ -39,7 +40,7 @@ class GitLabAdapter(CLIAdapter):
 
     async def fetch_assigned_mrs(
         self,
-        group: str,
+        group: str | None = None,
         assignee: str = "@me",
         author: str | None = None,
         reviewer: str | None = None,
@@ -51,7 +52,7 @@ class GitLabAdapter(CLIAdapter):
         Filters by assignee, author, reviewer, state, and group to show only relevant MRs.
 
         Args:
-            group: GitLab group to search (required, e.g., "axpo-pl")
+            group: Optional GitLab group to search (e.g., "axpo-pl")
             assignee: Assignee filter ("@me" for current user, or username)
             author: Optional author filter (username)
             reviewer: Optional reviewer filter ("@me" for current user, or username)
@@ -61,7 +62,6 @@ class GitLabAdapter(CLIAdapter):
             List of validated MergeRequest models
 
         Raises:
-            ValueError: If group is empty or not provided
             CLINotFoundError: If glab is not installed
             CLIAuthError: If glab is not authenticated
             CLIError: If glab returns an error (e.g., no git remotes found)
@@ -82,13 +82,11 @@ class GitLabAdapter(CLIAdapter):
             # Fetch MRs where current user is a reviewer
             mrs = await adapter.fetch_assigned_mrs(group="my-group", reviewer="@me")
         """
-        # Validate group parameter
-        if not group:
-            raise ValueError(
-                "GitLab group is required. "
-                "Set MONOCLE_GITLAB_GROUP environment variable or "
-                "configure in ~/.config/monocle/config.yaml"
-            )
+        # Without an explicit group, glab relies on git remotes.
+        # Skip fetch when the current repo has no GitLab remote to avoid noisy errors.
+        if not group and not await self._has_gitlab_remote():
+            logger.info("Skipping GitLab MR fetch: no group configured and no GitLab remote")
+            return []
 
         logger.info(
             "Fetching merge requests",
@@ -101,11 +99,12 @@ class GitLabAdapter(CLIAdapter):
             "mr",
             "list",
             "--all",
-            "--group",
-            group,
             "--output",
             "json",
         ]
+
+        if group:
+            args.extend(["--group", group])
 
         # Add assignee filter (if empty string, don't add to args to avoid glab conflict)
         if assignee:
@@ -145,6 +144,15 @@ class GitLabAdapter(CLIAdapter):
                 group=group,
             )
             raise
+
+    async def _has_gitlab_remote(self) -> bool:
+        """Check whether current repository has at least one GitLab remote."""
+        try:
+            stdout, _ = await run_cli_command(["git", "remote", "-v"], check=False, timeout=5.0)
+        except Exception:
+            return False
+
+        return "gitlab" in stdout.lower()
 
     async def check_auth(self) -> bool:
         """Check if glab is authenticated.
