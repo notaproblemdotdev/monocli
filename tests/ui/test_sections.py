@@ -5,8 +5,6 @@ from __future__ import annotations
 from textual.app import App
 from textual.app import ComposeResult
 
-import pytest
-
 from monocle.ui.sections import CodeReviewSection
 from monocle.ui.sections import CodeReviewSubSection
 from monocle.ui.sections import PieceOfWorkSection

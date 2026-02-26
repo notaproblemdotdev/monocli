@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from monocle.ui.main_screen import MainScreen
 from monocle.ui.app import MonoApp
+from monocle.ui.main_screen import MainScreen
 from tests.support.factories import make_code_review
 from tests.support.factories import make_jira_item
 

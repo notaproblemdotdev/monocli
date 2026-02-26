@@ -35,7 +35,7 @@ class MonoApp(App):
         MonoApp().run()
 
         # Or from command line:
-        # python -m monocle
+        # python -m monocle dash
     """
 
     THEME = "atom-one-dark"
@@ -98,7 +98,7 @@ class MonoApp(App):
             opener = shutil.which("open")
             if not opener:
                 raise FileNotFoundError("Could not find 'open' command")
-            subprocess.run([opener, str(path)], check=True)  # noqa: S603,S606
+            subprocess.run([opener, str(path)], check=True)  # noqa: S603
             return
 
         if os.name == "nt":
@@ -108,7 +108,7 @@ class MonoApp(App):
         opener = shutil.which("xdg-open")
         if not opener:
             raise FileNotFoundError("Could not find 'xdg-open' command")
-        subprocess.run([opener, str(path)], check=True)  # noqa: S603,S606
+        subprocess.run([opener, str(path)], check=True)  # noqa: S603
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         """Add app-specific commands to the command palette."""

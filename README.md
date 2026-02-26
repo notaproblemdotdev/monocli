@@ -30,21 +30,27 @@ uv pip install monocle
 Run the dashboard:
 
 ```bash
-monocle
+monocle dash
+```
+
+Run the dashboard in the browser:
+
+```bash
+monocle dash --web
 ```
 
 Or:
 
 ```bash
-python -m monocle
+python -m monocle dash
 ```
 
 Or with uvx:
 
 ```bash
-uvx monocle
+uvx monocle dash
 # or
-uvx https://github.com/notaproblemdotdev/monocle
+uvx https://github.com/notaproblemdotdev/monocle dash
 ```
 
 ## Configuration

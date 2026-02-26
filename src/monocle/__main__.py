@@ -1,6 +1,6 @@
 """Entry point for Monocle.
 
-Run the dashboard with: python -m monocle
+Run the dashboard with: python -m monocle dash
 Run setup with: python -m monocle setup
 """
 
@@ -16,7 +16,6 @@ from monocle import __version__
 from monocle import configure_logging
 from monocle import get_logger
 from monocle.config import ConfigError
-from monocle.config import get_config
 from monocle.config import validate_keyring_available
 from monocle.db.connection import DatabaseManager
 from monocle.db.work_store import WorkStore
@@ -61,7 +60,23 @@ def main_callback(
 
 
 @app.command()
-def tui(
+def dash(
+    web: t.Annotated[
+        bool,
+        typer.Option("--web", help="Serve the dashboard over the web (textual-serve)"),
+    ] = False,
+    port: t.Annotated[
+        int,
+        typer.Option("--port", "-p", help="Port for web server (requires --web)"),
+    ] = 6969,
+    host: t.Annotated[
+        str,
+        typer.Option("--host", help="Host interface for web server (requires --web)"),
+    ] = "localhost",
+    no_open: t.Annotated[
+        bool,
+        typer.Option("--no-open", help="Don't open browser automatically (requires --web)"),
+    ] = False,
     debug: t.Annotated[bool, typer.Option("--debug", help="Enable debug logging")] = False,
     offline: t.Annotated[bool, typer.Option("--offline", help="Use cached data only")] = False,
     db_path: t.Annotated[
@@ -73,11 +88,17 @@ def tui(
         typer.Option("--clear-cache", help="Clear all cached data and exit"),
     ] = False,
 ) -> None:
+    """Launch the dashboard (TUI), or serve it in a browser with `--web`."""
     import asyncio
 
     configure_logging(debug=debug)
     logger = get_logger()
-    logger.info("Starting Mono CLI TUI", version=__version__, debug_mode=debug)
+    logger.info(
+        "Starting Mono CLI Dashboard",
+        version=__version__,
+        debug_mode=debug,
+        web_mode=web,
+    )
 
     if clear_cache:
         try:
@@ -96,8 +117,34 @@ def tui(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
-    mono_app = MonoApp()
-    mono_app.run()
+    if web:
+        from textual_serve.server import Server
+
+        cmd_parts = [sys.executable, "-m", "monocle", "dash"]
+        if debug:
+            cmd_parts.append("--debug")
+        if offline:
+            cmd_parts.append("--offline")
+        if db_path:
+            cmd_parts.extend(["--db-path", db_path])
+
+        server = Server(" ".join(cmd_parts), host=host, port=port)
+
+        url = f"http://{host}:{port}"
+        typer.echo(f"Starting web server at {url}")
+
+        if not no_open:
+            typer.echo("Opening browser...")
+            webbrowser.open(url)
+
+        server.serve()
+        return
+
+    if port != 6969 or host != "localhost" or no_open:
+        typer.echo("Error: --host/--port/--no-open require --web", err=True)
+        raise typer.Exit(2)
+
+    MonoApp().run()
 
 
 @app.command()
@@ -133,61 +180,13 @@ def logs(
         typer.echo(f"No log file found at {log_path}")
         raise typer.Exit(1)
 
-    config = get_config()
-    cmd_template = config.show_logs_command
+    from monocle.config import get_config
+
+    cmd_template = get_config().show_logs_command
     cmd = cmd_template.replace("{file}", str(log_path))
 
     logger.info("Executing log viewer", command=cmd, log_path=str(log_path))
     subprocess.run(cmd, shell=True)
-
-
-@app.command()
-def web(
-    port: t.Annotated[int, typer.Option("--port", "-p", help="Port for web server")] = 6969,
-    no_open: t.Annotated[
-        bool,
-        typer.Option("--no-open", help="Don't open browser automatically"),
-    ] = False,
-    debug: t.Annotated[bool, typer.Option("--debug", help="Enable debug logging")] = False,
-    offline: t.Annotated[bool, typer.Option("--offline", help="Use cached data only")] = False,
-    db_path: t.Annotated[
-        str | None,
-        typer.Option("--db-path", help="Path to SQLite database file"),
-    ] = None,
-) -> None:
-    from textual_serve.server import Server
-
-    configure_logging(debug=debug)
-    logger = get_logger()
-    logger.info("Starting Mono CLI Web Server", version=__version__, port=port)
-
-    _apply_env_vars(offline, db_path)
-
-    try:
-        validate_keyring_available()
-    except ConfigError as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(1) from None
-
-    cmd_parts = [sys.executable, "-m", "monocle", "tui"]
-    if debug:
-        cmd_parts.append("--debug")
-    if offline:
-        cmd_parts.append("--offline")
-    if db_path:
-        cmd_parts.extend(["--db-path", db_path])
-
-    host = "localhost"
-    server = Server(" ".join(cmd_parts), host=host, port=port)
-
-    url = f"http://{host}:{port}"
-    typer.echo(f"Starting web server at {url}")
-
-    if not no_open:
-        typer.echo("Opening browser...")
-        webbrowser.open(url)
-
-    server.serve()
 
 
 def run_dev() -> None:
