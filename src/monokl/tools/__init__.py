@@ -6,11 +6,16 @@ import uuid as uuid_lib
 
 import typer
 
+from monokl.tools.network import network_app
+
 tools_app = typer.Typer(
     name="tool",
     help="Collection of useful developer tools",
     no_args_is_help=True,
 )
+
+# Register network subcommands
+tools_app.add_typer(network_app, name="network")
 
 
 @tools_app.command()
@@ -19,10 +24,10 @@ def uuid(
     output_format: t.Annotated[
         str, typer.Option("--format", "-f", help="Output format: text or json")
     ] = "text",
-    uppercase: t.Annotated[
+    uppercase: t.Annotated[  # noqa: FBT002
         bool, typer.Option("--uppercase", "-u", help="Uppercase output")
     ] = False,
-    no_hyphens: t.Annotated[
+    no_hyphens: t.Annotated[  # noqa: FBT002
         bool, typer.Option("--no-hyphens", help="Remove hyphens from output")
     ] = False,
 ) -> None:

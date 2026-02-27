@@ -56,3 +56,36 @@ uv sync --extra dev
   - **L**iskov Substitution Principle
   - **I**nterface Segregation Principle
   - **D**ependency Inversion Principle
+
+## Function Arguments
+
+- **Prefer keyword arguments** — Almost always use keyword-only arguments. Only use positional when it genuinely makes sense (e.g., obvious single-argument functions like `len(x)`, mathematical operations).
+- Use `*` in function signatures to enforce keyword-only arguments after it.
+- For boolean arguments, always make them keyword-only to improve readability at call sites.
+
+```python
+# Good
+def save_ping(url: str, *, timeout: float = 10.0, store: bool = False) -> None:
+    ...
+
+save_ping("https://example.com", store=True)
+
+# Bad
+def save_ping(url: str, timeout: float = 10.0, store: bool = False) -> None:
+    ...
+
+save_ping("https://example.com", 10.0, True)  # What does True mean?
+```
+
+## Common Ruff Rules to Keep in Mind
+
+These rules are frequently violated. Keep them in mind while writing code:
+
+- **FBT001/FBT002** — Boolean positional/default arguments. Always make boolean args keyword-only with `*`.
+- **PLR2004** — Magic numbers in comparisons. Define constants for numeric values used in comparisons.
+- **ASYNC109** — Async function with `timeout` parameter. Use `asyncio.timeout()` context manager instead.
+- **TC001/TC002/TC003** — Move third-party imports into `TYPE_CHECKING` block when only used for type hints.
+- **ICN003** — Don't import `TYPE_CHECKING` or other typing members explicitly. Use `from typing import TYPE_CHECKING`.
+- **BLE001** — Don't catch blind `Exception`. Catch specific exception types instead.
+- **RSE102** — Unnecessary parentheses on raised exceptions. Use `raise ValueError("msg")` not `raise ValueError("msg")`.
+- **PLC0415** — Imports should be at top-level. Avoid inline imports unless necessary (e.g., to avoid circular imports).

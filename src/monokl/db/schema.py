@@ -5,10 +5,17 @@ Provides schema creation and version-based migration system.
 
 from __future__ import annotations
 
-import aiosqlite
+import typing as t
+
+if t.TYPE_CHECKING:
+    import aiosqlite
+
+# Schema version constants
+SCHEMA_V2 = 2  # Unified cache table
+SCHEMA_V3 = 3  # Network pings table
 
 # Current schema version
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = SCHEMA_V3
 
 # Schema creation SQL
 SCHEMA_SQL = """
@@ -45,6 +52,21 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     value TEXT NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Network ping results table (v3)
+CREATE TABLE IF NOT EXISTS network_pings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    response_time_ms INTEGER,
+    status_code INTEGER,
+    success INTEGER NOT NULL,
+    error TEXT
+);
+
+-- Indexes for network_pings
+CREATE INDEX IF NOT EXISTS idx_network_pings_url ON network_pings(url);
+CREATE INDEX IF NOT EXISTS idx_network_pings_timestamp ON network_pings(timestamp);
 """
 
 
@@ -79,7 +101,7 @@ async def migrate_schema(conn: aiosqlite.Connection, from_version: int, to_versi
         from_version: Current schema version.
         to_version: Target schema version.
     """
-    if from_version < 2:
+    if from_version < SCHEMA_V2:
         # Migration v1 -> v2: Drop old cache tables, create new unified cache
         await conn.execute("DROP TABLE IF EXISTS cache_metadata")
         await conn.execute("DROP TABLE IF EXISTS merge_requests")
@@ -114,6 +136,24 @@ async def migrate_schema(conn: aiosqlite.Connection, from_version: int, to_versi
         )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_cached_data_cached_at ON cached_data(cached_at)"
+        )
+
+    if from_version < SCHEMA_V3:
+        # Migration v2 -> v3: Add network_pings table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS network_pings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                response_time_ms INTEGER,
+                status_code INTEGER,
+                success INTEGER NOT NULL,
+                error TEXT
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_network_pings_url ON network_pings(url)")
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_network_pings_timestamp ON network_pings(timestamp)"
         )
 
     # Update schema version
