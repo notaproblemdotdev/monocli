@@ -24,6 +24,7 @@ from monocle.db.work_store import WorkStore
 from monocle.features import get_feature_flag
 from monocle.features import is_feature_enabled
 from monocle.logging_config import get_log_file_path
+from monocle.tools import tools_app
 from monocle.ui.app import MonoApp
 
 
@@ -75,6 +76,7 @@ app = MonocleApp(
     help="Mono CLI Dashboard - Unified view of PRs and work items",
     no_args_is_help=True,
 )
+app.add_typer(tools_app, name="tool")
 
 
 def version_callback(value: bool) -> None:
